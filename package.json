@@ -1,0 +1,24 @@
+{
+  "name": "profiles",
+  "version": "1.0.0",
+  "description": "Reimagining Connections in the Era of AI",
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && source venv/bin/activate && python main.py",
+    "build:frontend": "cd frontend && npm run build",
+    "start:frontend": "cd frontend && npm start",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "profiles",
+    "connections",
+    "nextjs",
+    "fastapi",
+    "mcp"
+  ],
+  "author": "ThinkArcHQ",
+  "license": "MIT"
+}
