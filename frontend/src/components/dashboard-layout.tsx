@@ -28,8 +28,11 @@ const getBreadcrumbs = (pathname: string) => {
   const segments = pathname.split('/').filter(Boolean);
   const breadcrumbs = [{ title: 'Home', href: '/dashboard' }];
   
-  segments.forEach((segment, index) => {
-    const href = '/' + segments.slice(0, index + 1).join('/');
+  // Skip the first segment if it's 'dashboard' to avoid duplicate
+  const relevantSegments = segments[0] === 'dashboard' ? segments.slice(1) : segments;
+  
+  relevantSegments.forEach((segment, index) => {
+    const href = '/dashboard' + (relevantSegments.length > 0 ? '/' + relevantSegments.slice(0, index + 1).join('/') : '');
     const title = segment.charAt(0).toUpperCase() + segment.slice(1);
     breadcrumbs.push({ title, href });
   });
@@ -61,7 +64,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     const breadcrumbs = getBreadcrumbs(pathname);
 
     return (
-      <SidebarProvider>
+      <SidebarProvider defaultOpen={false}>
         <AppSidebar className="border-r" />
         <SidebarInset className="min-h-screen flex-1">
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -71,7 +74,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Breadcrumb>
                 <BreadcrumbList>
                   {breadcrumbs.map((breadcrumb, index) => (
-                    <React.Fragment key={breadcrumb.href}>
+                    <React.Fragment key={`${breadcrumb.href}-${index}`}>
                       {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
                       <BreadcrumbItem className="hidden md:block">
                         {index === breadcrumbs.length - 1 ? (

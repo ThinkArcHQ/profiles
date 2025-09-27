@@ -23,8 +23,8 @@ export default async function Home() {
               {user ? (
                 <>
                   <Button variant="ghost" asChild>
-                    <Link href="/dashboard" className="text-white/80 hover:text-white">
-                      Dashboard
+                    <Link href="/profiles" className="text-white/80 hover:text-white">
+                      Browse Profiles
                     </Link>
                   </Button>
                   <Button asChild>
@@ -190,7 +190,7 @@ export default async function Home() {
             </Button>
             
             <Button variant="outline" size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
-              <Link href="#profiles">
+              <Link href="/profiles">
                 Browse Profiles
               </Link>
             </Button>

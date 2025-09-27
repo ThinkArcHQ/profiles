@@ -37,7 +37,7 @@ export default function RequestPage() {
 
   const fetchProfile = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/profiles/${id}`);
+      const response = await fetch(`/api/profiles/${id}`);
       if (response.ok) {
         const data = await response.json();
         setProfile(data);
@@ -60,7 +60,7 @@ export default function RequestPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8000/appointments', {
+      const response = await fetch('/api/appointments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

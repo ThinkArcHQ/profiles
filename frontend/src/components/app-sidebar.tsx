@@ -42,6 +42,11 @@ import {
 // Menu items
 const menuItems = [
   {
+    title: 'Browse Profiles',
+    url: '/profiles',
+    icon: User,
+  },
+  {
     title: 'Dashboard',
     url: '/dashboard',
     icon: Home,
@@ -106,13 +111,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
+              <Link href="/profiles">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <User className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Profiles</span>
-                  <span className="truncate text-xs">by FinderBee</span>
+                  <span className="truncate text-xs">AI Agent Network</span>
                 </div>
               </Link>
             </SidebarMenuButton>

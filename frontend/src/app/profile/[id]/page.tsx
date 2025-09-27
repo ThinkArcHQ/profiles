@@ -32,7 +32,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/profiles/${id}`);
+      const response = await fetch(`/api/profiles/${id}`);
       if (response.ok) {
         const data = await response.json();
         setProfile(data);

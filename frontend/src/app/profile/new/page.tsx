@@ -55,7 +55,7 @@ export default function NewProfile() {
         'Content-Type': 'application/json',
       };
       
-      const response = await fetch('http://localhost:8000/profiles', {
+      const response = await fetch('/api/profiles', {
         method: 'POST',
         headers,
         body: JSON.stringify({

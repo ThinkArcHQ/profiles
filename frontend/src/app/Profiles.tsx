@@ -29,7 +29,7 @@ export default function Profiles() {
 
   const fetchProfiles = async () => {
     try {
-      const response = await fetch('http://localhost:8000/profiles');
+      const response = await fetch('/api/profiles');
       const data = await response.json();
       setProfiles(data);
     } catch (error) {

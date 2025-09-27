@@ -8,6 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { SearchProfiles } from '@/components/search-profiles';
+import { 
+  Users, 
+  Calendar, 
+  MessageSquare, 
+  Quote, 
+  Send, 
+  Plus,
+  TrendingUp,
+  Clock,
+  CheckCircle
+} from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -41,59 +53,35 @@ export default function DashboardPage() {
   const [quoteRequests, setQuoteRequests] = useState<AppointmentRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<AppointmentRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [stats, setStats] = useState({
+    totalProfiles: 0,
+    pendingRequests: 0,
+    acceptedRequests: 0,
+    sentRequests: 0
+  });
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-      return;
-    }
-
-    if (user) {
-      fetchData();
+    if (!authLoading) {
+      if (!user) {
+        router.push('/');
+      } else {
+        fetchData();
+        fetchStats();
+      }
     }
   }, [user, authLoading, router]);
 
-  useEffect(() => {
-    // Handle URL fragments for tab navigation
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'meetings' || hash === 'quotes' || hash === 'sent') {
-        setActiveTab(hash);
-      } else {
-        setActiveTab('profile');
-      }
-    };
-
-    // Set initial tab based on URL
-    handleHashChange();
-    
-    // Listen for hash changes
-    window.addEventListener('hashchange', handleHashChange);
-    
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
-
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = token ? { 'Authorization': `Bearer ${token}` } : {};
-
       // Fetch user's profile (single profile per user)
-      const profilesResponse = await fetch('http://localhost:8000/profiles/my', {
-        headers,
-      });
+      const profilesResponse = await fetch('/api/profiles/my');
       if (profilesResponse.ok) {
         const profilesData = await profilesResponse.json();
         setProfile(profilesData.length > 0 ? profilesData[0] : null);
       }
 
       // Fetch received requests and separate them
-      const requestsResponse = await fetch('http://localhost:8000/appointments/received', {
-        headers,
-      });
+      const requestsResponse = await fetch('/api/appointments/received');
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
         setMeetingRequests(requestsData.filter((req: AppointmentRequest) => req.request_type === 'meeting'));
@@ -101,9 +89,7 @@ export default function DashboardPage() {
       }
 
       // Fetch sent requests
-      const sentResponse = await fetch('http://localhost:8000/appointments/sent', {
-        headers,
-      });
+      const sentResponse = await fetch('/api/appointments/sent');
       if (sentResponse.ok) {
         const sentData = await sentResponse.json();
         setSentRequests(sentData);
@@ -115,20 +101,48 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      // Get total profiles count
+      const profilesResponse = await fetch('/api/profiles');
+      if (profilesResponse.ok) {
+        const profilesData = await profilesResponse.json();
+        setStats(prev => ({ ...prev, totalProfiles: profilesData.length }));
+      }
+
+      // Get request stats
+      const receivedResponse = await fetch('/api/appointments/received');
+      if (receivedResponse.ok) {
+        const receivedData = await receivedResponse.json();
+        const pending = receivedData.filter((req: AppointmentRequest) => req.status === 'pending').length;
+        const accepted = receivedData.filter((req: AppointmentRequest) => req.status === 'accepted').length;
+        setStats(prev => ({ ...prev, pendingRequests: pending, acceptedRequests: accepted }));
+      }
+
+      const sentResponse = await fetch('/api/appointments/sent');
+      if (sentResponse.ok) {
+        const sentData = await sentResponse.json();
+        setStats(prev => ({ ...prev, sentRequests: sentData.length }));
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
   const handleStatusUpdate = async (requestId: string, status: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/appointments/${requestId}/status`, {
+      const response = await fetch(`/api/appointments/${requestId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({ status }),
       });
 
       if (response.ok) {
-        // Refresh requests
+        // Refresh data after status update
         fetchData();
+        fetchStats();
       }
     } catch (error) {
       console.error('Error updating status:', error);
@@ -137,342 +151,294 @@ export default function DashboardPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-orange-600 text-lg">Loading your dashboard...</p>
+          <p className="text-orange-600 text-lg">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-orange-900 mb-2">Dashboard</h1>
-        <p className="text-orange-700">Manage your profile and connection requests</p>
+    <div className="flex-1 space-y-6 p-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1">
+            Discover professionals and manage your connections
+          </p>
+        </div>
+        {!profile && (
+          <Button asChild>
+            <Link href="/profile/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Profile
+            </Link>
+          </Button>
+        )}
       </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Profiles</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalProfiles}</div>
+            <p className="text-xs text-muted-foreground">
+              Available for discovery
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pendingRequests}</div>
+            <p className="text-xs text-muted-foreground">
+              Awaiting your response
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Accepted Requests</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.acceptedRequests}</div>
+            <p className="text-xs text-muted-foreground">
+              Successful connections
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Sent Requests</CardTitle>
+            <Send className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.sentRequests}</div>
+            <p className="text-xs text-muted-foreground">
+              Your outreach efforts
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <Tabs defaultValue="discover" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="meetings">Meeting Requests</TabsTrigger>
-          <TabsTrigger value="quotes">Quote Requests</TabsTrigger>
-          <TabsTrigger value="sent">Sent Requests</TabsTrigger>
-        </TabsList>          <TabsContent value="profile" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-orange-900">Your Profile</h2>
-              {profile ? (
+          <TabsTrigger value="discover">Discover Profiles</TabsTrigger>
+          <TabsTrigger value="meetings" id="meetings">
+            Meeting Requests ({meetingRequests.length})
+          </TabsTrigger>
+          <TabsTrigger value="quotes" id="quotes">
+            Quote Requests ({quoteRequests.length})
+          </TabsTrigger>
+          <TabsTrigger value="sent" id="sent">
+            Sent Requests ({sentRequests.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="discover" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Discover Professionals
+              </CardTitle>
+              <CardDescription>
+                Search and connect with professionals in your field or find experts for your projects
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SearchProfiles limit={6} />
+              <div className="mt-6 text-center">
                 <Button asChild variant="outline">
-                  <Link href={`/profile/${profile.id}`}>Edit Profile</Link>
+                  <Link href="/profiles">
+                    View All Profiles
+                  </Link>
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="meetings" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Meeting Requests
+              </CardTitle>
+              <CardDescription>
+                Requests for meetings and consultations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {meetingRequests.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No meeting requests</h3>
+                  <p className="text-gray-600">Meeting requests will appear here when received</p>
+                </div>
               ) : (
-                <Button asChild>
-                  <Link href="/profile/new">Create Profile</Link>
-                </Button>
+                <div className="space-y-4">
+                  {meetingRequests.map((request) => (
+                    <div key={request.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium">{request.requester_name}</h4>
+                          <p className="text-sm text-gray-600">{request.requester_email}</p>
+                        </div>
+                        <Badge variant={request.status === 'pending' ? 'secondary' : 
+                                     request.status === 'accepted' ? 'default' : 'destructive'}>
+                          {request.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm mb-3">{request.message}</p>
+                      {request.preferred_time && (
+                        <p className="text-sm text-gray-600 mb-3">
+                          Preferred time: {new Date(request.preferred_time).toLocaleString()}
+                        </p>
+                      )}
+                      {request.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleStatusUpdate(request.id, 'accepted')}
+                          >
+                            Accept
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleStatusUpdate(request.id, 'rejected')}
+                          >
+                            Decline
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
-            </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {!profile ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-orange-900 mb-2">No profile yet</h3>
-                  <p className="text-orange-600 text-center mb-6 max-w-md">
-                    Create your profile to start getting discovered by AI agents worldwide.
-                  </p>
-                  <Button asChild>
-                    <Link href="/profile/new">Create Your Profile</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-xl text-orange-900">{profile.name}</CardTitle>
-                      <CardDescription>{profile.email}</CardDescription>
-                    </div>
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {profile.name.charAt(0).toUpperCase()}
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                  <p className="text-orange-700 mb-4">{profile.bio}</p>
-                  
-                  {profile.skills.length > 0 && (
-                    <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-orange-900 mb-2">Skills</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {profile.skills.map((skill: string, index: number) => (
-                          <Badge key={index} variant="secondary">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {profile.available_for.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="text-sm font-semibold text-orange-900 mb-2">Available For</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {profile.available_for.map((item: string, index: number) => (
-                          <Badge key={index} className="capitalize">
-                            {item}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex space-x-3">
-                    <Button asChild className="flex-1">
-                      <Link href={`/profile/${profile.id}`}>View Public Profile</Link>
-                    </Button>
-                    <Button variant="outline" asChild className="flex-1">
-                      <Link href={`/profile/${profile.id}`}>Edit Profile</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="meetings" className="space-y-6">
-            <h2 className="text-2xl font-semibold text-orange-900">Meeting Requests</h2>
-
-            {meetingRequests.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-orange-900 mb-2">No meeting requests yet</h3>
-                  <p className="text-orange-600 text-center max-w-md">
-                    When AI agents discover your profile, meeting requests will appear here.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {meetingRequests.map((request) => (
-                  <Card key={request.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
+        <TabsContent value="quotes" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Quote className="h-5 w-5" />
+                Quote Requests
+              </CardTitle>
+              <CardDescription>
+                Requests for project quotes and estimates
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {quoteRequests.length === 0 ? (
+                <div className="text-center py-8">
+                  <Quote className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No quote requests</h3>
+                  <p className="text-gray-600">Quote requests will appear here when received</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {quoteRequests.map((request) => (
+                    <div key={request.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
                         <div>
-                          <CardTitle className="text-lg text-orange-900">
-                            {request.requester_name}
-                          </CardTitle>
-                          <CardDescription>{request.requester_email}</CardDescription>
+                          <h4 className="font-medium">{request.requester_name}</h4>
+                          <p className="text-sm text-gray-600">{request.requester_email}</p>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={request.status === 'pending' ? 'secondary' : 'default'}>
-                            {request.status}
-                          </Badge>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            Meeting
-                          </Badge>
-                        </div>
+                        <Badge variant={request.status === 'pending' ? 'secondary' : 
+                                     request.status === 'accepted' ? 'default' : 'destructive'}>
+                          {request.status}
+                        </Badge>
                       </div>
-                    </CardHeader>
-                    
-                    <CardContent>
-                      <p className="text-orange-700 mb-4">{request.message}</p>
-                      
-                      {request.preferred_time && (
-                        <p className="text-sm text-orange-600 mb-4">
-                          <strong>Preferred Time:</strong> {request.preferred_time}
-                        </p>
-                      )}
-
+                      <p className="text-sm mb-3">{request.message}</p>
                       {request.status === 'pending' && (
-                        <div className="flex space-x-3">
+                        <div className="flex gap-2">
                           <Button 
+                            size="sm" 
                             onClick={() => handleStatusUpdate(request.id, 'accepted')}
-                            className="flex-1"
                           >
-                            Accept Meeting
+                            Accept
                           </Button>
                           <Button 
-                            variant="outline" 
+                            size="sm" 
+                            variant="outline"
                             onClick={() => handleStatusUpdate(request.id, 'rejected')}
-                            className="flex-1"
                           >
                             Decline
                           </Button>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="quotes" className="space-y-6">
-            <h2 className="text-2xl font-semibold text-orange-900">Quote Requests</h2>
-
-            {quoteRequests.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-orange-900 mb-2">No quote requests yet</h3>
-                  <p className="text-orange-600 text-center max-w-md">
-                    When AI agents need quotes for your services, requests will appear here.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {quoteRequests.map((request) => (
-                  <Card key={request.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
+        <TabsContent value="sent" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Send className="h-5 w-5" />
+                Sent Requests
+              </CardTitle>
+              <CardDescription>
+                Requests you've sent to other professionals
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {sentRequests.length === 0 ? (
+                <div className="text-center py-8">
+                  <Send className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No sent requests</h3>
+                  <p className="text-gray-600">Requests you send will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sentRequests.map((request) => (
+                    <div key={request.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
                         <div>
-                          <CardTitle className="text-lg text-orange-900">
-                            {request.requester_name}
-                          </CardTitle>
-                          <CardDescription>{request.requester_email}</CardDescription>
+                          <h4 className="font-medium">Request to {request.requester_name}</h4>
+                          <p className="text-sm text-gray-600">{request.request_type}</p>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={request.status === 'pending' ? 'secondary' : 'default'}>
-                            {request.status}
-                          </Badge>
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                            Quote
-                          </Badge>
-                        </div>
+                        <Badge variant={request.status === 'pending' ? 'secondary' : 
+                                     request.status === 'accepted' ? 'default' : 'destructive'}>
+                          {request.status}
+                        </Badge>
                       </div>
-                    </CardHeader>
-                    
-                    <CardContent>
-                      <p className="text-orange-700 mb-4">{request.message}</p>
-                      
-                      {request.preferred_time && (
-                        <p className="text-sm text-orange-600 mb-4">
-                          <strong>Deadline:</strong> {request.preferred_time}
-                        </p>
-                      )}
-
-                      {request.status === 'pending' && (
-                        <div className="flex space-x-3">
-                          <Button 
-                            onClick={() => handleStatusUpdate(request.id, 'accepted')}
-                            className="flex-1"
-                          >
-                            Accept Quote Request
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => handleStatusUpdate(request.id, 'rejected')}
-                            className="flex-1"
-                          >
-                            Decline
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="sent" className="space-y-6">
-            <h2 className="text-2xl font-semibold text-orange-900">Sent Requests</h2>
-
-            {sentRequests.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-orange-900 mb-2">No sent requests yet</h3>
-                  <p className="text-orange-600 text-center max-w-md">
-                    Requests you send to other profiles will appear here.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {sentRequests.map((request) => (
-                  <Card key={request.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-lg text-orange-900">
-                            Request to: {request.requester_name}
-                          </CardTitle>
-                          <CardDescription>{request.requester_email}</CardDescription>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={request.status === 'pending' ? 'secondary' : 
-                                        request.status === 'accepted' ? 'default' : 'destructive'}>
-                            {request.status}
-                          </Badge>
-                          <Badge variant="outline" className={
-                            request.request_type === 'meeting' 
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
-                              : "bg-green-50 text-green-700 border-green-200"
-                          }>
-                            {request.request_type}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    
-                    <CardContent>
-                      <p className="text-orange-700 mb-4">{request.message}</p>
-                      
-                      {request.preferred_time && (
-                        <p className="text-sm text-orange-600 mb-4">
-                          <strong>Preferred Time:</strong> {request.preferred_time}
-                        </p>
-                      )}
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-orange-600">
-                          Sent: {new Date(request.created_at).toLocaleDateString()}
-                        </span>
-                        {request.status === 'pending' && (
-                          <Badge variant="outline" className="text-yellow-700">
-                            Awaiting Response
-                          </Badge>
-                        )}
-                        {request.status === 'accepted' && (
-                          <Badge className="bg-green-600 text-white">
-                            Accepted ✓
-                          </Badge>
-                        )}
-                        {request.status === 'rejected' && (
-                          <Badge variant="destructive">
-                            Declined
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                      <p className="text-sm mb-2">{request.message}</p>
+                      <p className="text-xs text-gray-500">
+                        Sent on {new Date(request.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
