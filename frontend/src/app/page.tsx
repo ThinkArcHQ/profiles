@@ -2,12 +2,14 @@ import { withAuth } from '@workos-inc/authkit-nextjs';
 import Link from 'next/link';
 import Profiles from './Profiles';
 import ClipboardButton from './ClipboardButton';
+import { Button } from '@/components/ui/button';
+import { FeaturesSectionWithHoverEffects } from '@/components/blocks/feature-section-with-hover-effects';
 
 export default async function Home() {
   const { user } = await withAuth();
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
       {/* Navigation */}
       <nav className="absolute top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,21 +19,19 @@ export default async function Home() {
               Profiles
             </div>
 
-            <div className="hidden md:flex items-center space-x-1">
+            <div className="hidden md:flex items-center space-x-4">
               {user ? (
                 <>
-                  <Link
-                    href="/dashboard"
-                    className="text-white/80 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-200 font-medium backdrop-blur-sm"
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/profile/new"
-                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-orange-500/25"
-                  >
-                    Register Profile
-                  </Link>
+                  <Button variant="ghost" asChild>
+                    <Link href="/dashboard" className="text-white/80 hover:text-white">
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/profile/new">
+                      Register Profile
+                    </Link>
+                  </Button>
                   <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-white/20">
                     <div className="text-sm">
                       <span className="text-white/80">Welcome,</span>
@@ -47,18 +47,16 @@ export default async function Home() {
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/login"
-                    className="text-white/80 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-200 font-medium backdrop-blur-sm"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/profile/new"
-                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-orange-500/25"
-                  >
-                    Get Started
-                  </Link>
+                  <Button variant="ghost" asChild>
+                    <Link href="/login" className="text-white/80 hover:text-white">
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/profile/new">
+                      Get Started
+                    </Link>
+                  </Button>
                 </>
               )}
             </div>
@@ -97,31 +95,29 @@ export default async function Home() {
             </h1>
 
             <p className="text-xl lg:text-2xl text-gray-300 mb-12 leading-relaxed max-w-3xl mx-auto">
-              Create your profile and let AI agents find you for opportunities, collaborations, and projects.
+              Create your profile and let AI agents find you for meeting requests and quote opportunities.
               Connect with intelligent systems looking for your skills and expertise.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-              <Link
-                href="/profile/new"
-                className="group bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transform hover:scale-105 transition-all duration-300 shadow-2xl shadow-orange-500/25 flex items-center"
-              >
-                Create Your Profile
-                <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </Link>
-
-              {!user && (
-                <Link
-                  href="#profiles"
-                  className="group border-2 border-orange-500/50 text-white hover:bg-orange-500 hover:text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 backdrop-blur-sm flex items-center"
-                >
-                  View Profiles
+              <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+                <Link href="/profile/new" className="flex items-center">
+                  Create Your Profile
                   <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </Link>
+              </Button>
+
+              {!user && (
+                <Button variant="outline" size="lg" asChild className="text-lg px-8 py-6 rounded-2xl border-2 border-orange-500/50 text-white hover:bg-orange-500 hover:text-white backdrop-blur-sm">
+                  <Link href="#profiles" className="flex items-center">
+                    View Profiles
+                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </Link>
+                </Button>
               )}
             </div>
           </div>
@@ -138,52 +134,33 @@ export default async function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <h2 className="text-4xl lg:text-5xl font-bold text-black mb-6">
+            <h2 className="text-4xl lg:text-5xl font-bold text-orange-900 mb-6">
               Why Register Your Profile?
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Showcase your skills and become discoverable by AI agents worldwide. Open doors to new opportunities and collaborations.
+            <p className="text-xl text-orange-700 max-w-3xl mx-auto">
+              The first social platform designed for AI discovery. Anyone can join and be found by intelligent systems worldwide for meetings, quotes, and connections.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-            <div className="group text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-orange-500/25">
-                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9V3" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-black mb-4">Global Reach</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Your profile becomes visible to AI agents around the world, expanding your opportunities beyond geographic limits.
-              </p>
-            </div>
+          <FeaturesSectionWithHoverEffects />
 
-            <div className="group text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-800 to-black rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-gray-800/25">
-                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-black mb-4">Smart Matching</h3>
-              <p className="text-gray-600 leading-relaxed">
-                AI agents can find you based on your specific skills, experience, and availability for perfect project matches.
+          {/* Call to Action */}
+          <div className="text-center mt-16">
+            <div className="bg-gradient-to-r from-orange-500/10 to-orange-600/10 rounded-3xl p-8 border border-orange-200">
+              <h3 className="text-2xl font-bold text-orange-900 mb-4">
+                Ready to be discovered?
+              </h3>
+              <p className="text-orange-700 mb-6 max-w-2xl mx-auto">
+                Join the first social platform designed for AI agents. Create your profile and start receiving meeting requests and opportunities.
               </p>
-            </div>
-
-            <div className="group text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-orange-600/25">
-                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-black mb-4">Always Available</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Your profile works 24/7, allowing AI agents to discover and connect with you even while you sleep.
-              </p>
+              <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+                <Link href="/profile/new">
+                  Create Your Profile Now
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -192,33 +169,31 @@ export default async function Home() {
       <Profiles />
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-orange-600/5 to-transparent"></div>
+      <section className="py-24 bg-gradient-to-br from-orange-100 to-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 via-orange-400/10 to-transparent"></div>
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-8">
+          <h2 className="text-4xl lg:text-5xl font-bold text-orange-900 mb-8">
             Ready to Be Discovered by
-            <span className="block bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
               AI Agents Worldwide?
             </span>
           </h2>
-          <p className="text-xl text-gray-300 mb-12 leading-relaxed">
+          <p className="text-xl text-orange-700 mb-12 leading-relaxed">
             Join thousands of professionals who are getting discovered by AI agents for exciting opportunities and projects.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Link
-              href="/profile/new"
-              className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transform hover:scale-105 transition-all duration-300 shadow-2xl shadow-orange-500/25"
-            >
-              Create Your Profile
-            </Link>
+            <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+              <Link href="/profile/new">
+                Create Your Profile
+              </Link>
+            </Button>
             
-            <Link
-              href="#profiles"
-              className="text-white hover:text-orange-300 font-semibold text-lg transition-colors"
-            >
-              Browse Profiles
-            </Link>
+            <Button variant="outline" size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+              <Link href="#profiles">
+                Browse Profiles
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

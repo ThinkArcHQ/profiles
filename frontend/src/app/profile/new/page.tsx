@@ -2,20 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '@workos-inc/authkit-nextjs/components';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 
 export default function NewProfile() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '',
+    display_name: '',
     email: '',
-    bio: '',
+    profession: '',
+    headline: '',
+    location: '',
     skills: '',
-    available_for: ['meetings'] as string[]
+    profile_picture: null as File | null,
+    available_for: ['meetings'] as string[],
+    profile_visibility: 'public' as 'public' | 'members_only' | 'connections_only'
   });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData(prev => ({ ...prev, profile_picture: file }));
+  };
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -23,7 +38,7 @@ export default function NewProfile() {
     if (user) {
       setFormData(prev => ({
         ...prev,
-        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+        display_name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
         email: user.email
       }));
     }
@@ -44,274 +59,264 @@ export default function NewProfile() {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          name: formData.name,
+          name: formData.display_name,
           email: formData.email,
-          bio: formData.bio,
-          skills: skillsArray,
-          available_for: formData.available_for
+          bio: formData.headline, // Using headline as bio for now
+          skills: skillsArray.slice(0, 5), // Limit to 5 skills
+          available_for: formData.available_for,
+          location: formData.location,
+          profile_visibility: formData.profile_visibility
         }),
       });
 
       if (response.ok) {
-        if (user) {
-          router.push('/dashboard');
-        } else {
-          router.push('/');
-        }
+        router.push('/dashboard');
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create profile');
+        alert('Failed to create profile');
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error creating profile:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create profile. Please try again.';
-      if (errorMessage.includes('Authentication required')) {
-        alert('Please sign in to create a profile.');
-        router.push('/login');
-      } else {
-        alert(errorMessage);
-      }
+      alert('Failed to create profile');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAvailabilityChange = (service: string, checked: boolean) => {
+  const handleAvailabilityChange = (value: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      available_for: checked
-        ? [...prev.available_for, service]
-        : prev.available_for.filter(s => s !== service)
+      available_for: checked 
+        ? [...prev.available_for, value]
+        : prev.available_for.filter(item => item !== value)
     }));
   };
 
+  const nextStep = () => {
+    if (currentStep < 2) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const progress = (currentStep / 2) * 100;
+
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-orange-600 text-lg">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
-      {/* Left Side - Form */}
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
-          <Link href="/" className="flex items-center gap-2 font-medium">
-            <div className="bg-orange-500 text-white flex size-6 items-center justify-center rounded-md">
-              <span className="text-xs font-bold">P</span>
-            </div>
-            Profiles
-          </Link>
+    <div className="min-h-screen bg-white">
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-black mb-2">Create Your Profile</h1>
+          <p className="text-orange-600">Minimal data, maximum privacy - get discovered by AI agents</p>
         </div>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Create Your Profile</h1>
-                <p className="text-muted-foreground text-sm text-balance">
-                  {user 
-                    ? "Set up your profile to be discovered by AI agents worldwide"
-                    : "Join our community and become discoverable by AI agents"
-                  }
-                </p>
-                {!user && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    💡 <Link href="/login" className="text-orange-600 hover:text-orange-700 underline font-medium transition-colors">Sign in</Link> to manage your profiles
-                  </p>
-                )}
-              </div>
 
-              {/* Step Indicator */}
-              <div className="flex justify-center gap-2">
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs ${currentStep === 1 ? 'bg-orange-100 text-orange-700' : currentStep > 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                  <span className="w-4 h-4 rounded-full bg-current text-white flex items-center justify-center text-[10px] font-bold">1</span>
-                  <span className="font-medium">Basic</span>
-                </div>
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs ${currentStep === 2 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'}`}>
-                  <span className="w-4 h-4 rounded-full bg-current text-white flex items-center justify-center text-[10px] font-bold">2</span>
-                  <span className="font-medium">Details</span>
-                </div>
-              </div>
-
-              <div className="grid gap-6">
-                {currentStep === 1 && (
-                  <>
-                    <div className="grid gap-3">
-                      <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Your Name *
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="What should people call you?"
-                        disabled={user ? true : false}
-                      />
-                      {user && (
-                        <p className="text-xs text-orange-600">✨ Name is automatically filled from your account</p>
-                      )}
-                    </div>
-
-                    <div className="grid gap-3">
-                      <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="m@example.com"
-                        disabled={user ? true : false}
-                      />
-                      {user && (
-                        <p className="text-xs text-orange-600">✨ Email is automatically filled from your account</p>
-                      )}
-                    </div>
-
-                    <div className="grid gap-3">
-                      <label htmlFor="bio" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Tell Your Story *
-                      </label>
-                      <textarea
-                        id="bio"
-                        required
-                        rows={4}
-                        value={formData.bio}
-                        onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                        placeholder="Share who you are, what you do, your interests, hobbies, or anything that makes you unique..."
-                      />
-                      <p className="text-xs text-muted-foreground">💡 Be yourself! AI agents are interested in all kinds of people.</p>
-                    </div>
-                  </>
-                )}
-
-                {currentStep === 2 && (
-                  <>
-                    <div className="grid gap-3">
-                      <label htmlFor="skills" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Your Talents & Interests *
-                      </label>
-                      <input
-                        type="text"
-                        id="skills"
-                        required
-                        value={formData.skills}
-                        onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Photography, Cooking, Teaching, Writing, Gaming, Art..."
-                      />
-                      <p className="text-xs text-muted-foreground">✨ Include anything you&apos;re good at or passionate about - separate with commas</p>
-                    </div>
-
-                    <div className="grid gap-3">
-                      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        How Would You Like to Connect? *
-                      </label>
-                      <div className="space-y-3">
-                        {[
-                          { value: 'meetings', label: 'Meetings', desc: 'General conversations, discussions, and connections' },
-                          { value: 'quotes', label: 'Services', desc: 'Professional work, consulting, or paid projects' }
-                        ].map((service) => (
-                          <div key={service.value} className="flex items-start space-x-3 p-3 border border-input rounded-md hover:border-orange-300 transition-colors">
-                            <input
-                              type="checkbox"
-                              id={service.value}
-                              checked={formData.available_for.includes(service.value)}
-                              onChange={(e) => handleAvailabilityChange(service.value, e.target.checked)}
-                              className="mt-1 h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
-                            />
-                            <div className="flex-1">
-                              <label htmlFor={service.value} className="text-sm font-medium cursor-pointer">
-                                {service.label}
-                              </label>
-                              <p className="text-xs text-muted-foreground mt-1">{service.desc}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {formData.available_for.length === 0 && (
-                        <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded-md border border-orange-200">Please select at least one way you&apos;d like to connect</p>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="flex justify-between pt-6">
-                  {currentStep > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(currentStep - 1)}
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-                    >
-                      Back
-                    </button>
-                  )}
-                  
-                  {currentStep < 2 ? (
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(currentStep + 1)}
-                      disabled={!formData.name || !formData.email || !formData.bio}
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 ml-auto"
-                    >
-                      Continue
-                    </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      disabled={loading || formData.available_for.length === 0}
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 ml-auto"
-                    >
-                      {loading ? 'Creating Profile...' : 'Complete Profile'}
-                    </button>
-                  )}
-                </div>
-              </form>
-            </div>
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex justify-between text-sm text-orange-600 mb-2">
+            <span>Step {currentStep} of 2</span>
+            <span>{Math.round(progress)}% Complete</span>
           </div>
+          <Progress value={progress} className="h-2" />
         </div>
 
-          {/* Right side - Image/Brand */}
-          <div className="hidden lg:block relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-orange-800">
-              <div className="flex items-center justify-center h-full p-8">
-                <div className="max-w-md text-center text-white">
-                  <h2 className="text-3xl font-bold mb-6">Join the Future of Connection</h2>
-                  <p className="text-lg text-orange-100 mb-8">
-                    AI agents are looking for real people with unique perspectives and talents.
-                  </p>
-                  <div className="space-y-4 text-left">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-orange-200 rounded-full"></div>
-                      <span className="text-orange-100">Connect with intelligent AI agents</span>
+        <Card className="shadow-lg border-orange-500">
+          <CardHeader className="border-b border-orange-500">
+            <CardTitle className="text-xl text-black">
+              {currentStep === 1 && "Identity & Location"}
+              {currentStep === 2 && "Expertise & Availability"}
+            </CardTitle>
+            <CardDescription className="text-orange-600">
+              {currentStep === 1 && "How should AI agents identify and locate you?"}
+              {currentStep === 2 && "What skills do you offer and how can people connect?"}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Step 1: Identity & Location */}
+              {currentStep === 1 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="display_name" className="text-black">Display Name *</Label>
+                    <Input
+                      id="display_name"
+                      type="text"
+                      value={formData.display_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
+                      placeholder="Your professional name or pseudonym"
+                      required
+                    />
+                    <p className="text-sm text-orange-600 mt-1">
+                      Can be your real name, professional name, or pseudonym
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="profession" className="text-black">Profession</Label>
+                    <Input
+                      id="profession"
+                      type="text"
+                      value={formData.profession}
+                      onChange={(e) => setFormData(prev => ({ ...prev, profession: e.target.value }))}
+                      placeholder="e.g., Software Engineer, Designer, Teacher"
+                    />
+                    <p className="text-sm text-orange-600 mt-1">
+                      Optional - helps AI agents understand your role
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="profile_picture" className="text-black">Profile Picture</Label>
+                    <div className="mt-1">
+                      <input
+                        id="profile_picture"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="block w-full text-sm text-black file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100 border border-orange-500 rounded-md p-2"
+                      />
+                      <p className="text-sm text-orange-600 mt-1">
+                        Optional - JPG, PNG, or GIF (max 5MB)
+                      </p>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-orange-200 rounded-full"></div>
-                      <span className="text-orange-100">Share your unique talents and interests</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-orange-200 rounded-full"></div>
-                      <span className="text-orange-100">Build meaningful connections</span>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="headline" className="text-black">Professional Headline *</Label>
+                    <Textarea
+                      id="headline"
+                      value={formData.headline}
+                      onChange={(e) => setFormData(prev => ({ ...prev, headline: e.target.value }))}
+                      placeholder="Brief description of what you do (1-2 lines)"
+                      rows={2}
+                      required
+                    />
+                    <p className="text-sm text-orange-600 mt-1">
+                      Keep it concise - this helps AI agents understand your expertise
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="location" className="text-black">General Location *</Label>
+                    <Input
+                      id="location"
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                      placeholder="City, Region (e.g., San Francisco, CA)"
+                      required
+                    />
+                    <p className="text-sm text-orange-600 mt-1">
+                      City/region only - no specific addresses needed
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Expertise & Availability */}
+              {currentStep === 2 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="skills" className="text-black">Top Skills & Expertise *</Label>
+                    <Input
+                      id="skills"
+                      type="text"
+                      value={formData.skills}
+                      onChange={(e) => setFormData(prev => ({ ...prev, skills: e.target.value }))}
+                      placeholder="e.g., Python, Design, Marketing, Cooking, Teaching"
+                      required
+                    />
+                    <p className="text-sm text-orange-600 mt-1">
+                      List your top 3-5 skills (comma-separated) - quality over quantity
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label className="text-base font-semibold text-black">How can people connect with you? *</Label>
+                    <p className="text-sm text-orange-600 mb-4">
+                      Select the types of connections you&apos;re open to receiving
+                    </p>
+                    
+                    <div className="space-y-3">
+                      {[
+                        { value: 'meetings', label: 'Meeting Requests', desc: 'General conversations, consultations, networking' },
+                        { value: 'quotes', label: 'Quote Requests', desc: 'Paid work, consulting, project estimates' }
+                      ].map((option) => (
+                        <div key={option.value} className="flex items-start space-x-3 p-3 border border-orange-500 rounded-lg hover:bg-orange-50 transition-colors">
+                          <Checkbox
+                            id={option.value}
+                            checked={formData.available_for.includes(option.value)}
+                            onCheckedChange={(checked) => 
+                              handleAvailabilityChange(option.value, checked as boolean)
+                            }
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor={option.value} className="text-sm font-medium cursor-pointer text-black">
+                              {option.label}
+                            </Label>
+                            <p className="text-xs text-orange-600 mt-1">{option.desc}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
+              )}
 
+              {/* Step 3: Privacy & Contact */}
+              {/* Removed - no longer needed since we don't share emails and have terms/privacy policy */}
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between pt-6">
+                <div>
+                  {currentStep > 1 && (
+                    <Button type="button" variant="outline" onClick={prevStep}>
+                      Previous
+                    </Button>
+                  )}
+                </div>
+
+                <div className="flex space-x-3">
+                  {currentStep < 2 ? (
+                    <Button 
+                      type="button" 
+                      onClick={nextStep}
+                      disabled={
+                        (currentStep === 1 && (!formData.display_name || !formData.headline || !formData.location))
+                      }
+                    >
+                      Next Step
+                    </Button>
+                  ) : (
+                    <Button 
+                      type="submit" 
+                      disabled={loading || !formData.skills || formData.available_for.length === 0}
+                    >
+                      {loading ? 'Creating Profile...' : 'Create Profile'}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

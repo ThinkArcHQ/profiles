@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@workos-inc/authkit-nextjs/components';
 import { signOut } from '@workos-inc/authkit-nextjs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 interface Profile {
   id: string;
@@ -36,7 +40,6 @@ export default function DashboardPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [requests, setRequests] = useState<AppointmentRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'profiles' | 'requests'>('profiles');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -51,27 +54,23 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
-      
-      // Fetch user's profiles
+      // Fetch profiles
       const profilesResponse = await fetch('http://localhost:8000/profiles/my', {
         headers: {
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      
       if (profilesResponse.ok) {
         const profilesData = await profilesResponse.json();
         setProfiles(profilesData);
       }
 
-      // Fetch received appointment requests
+      // Fetch requests
       const requestsResponse = await fetch('http://localhost:8000/appointments/received', {
         headers: {
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
         setRequests(requestsData);
@@ -83,251 +82,231 @@ export default function DashboardPage() {
     }
   };
 
-  const handleRequestAction = async (requestId: string, status: 'accepted' | 'rejected') => {
+  const handleStatusUpdate = async (requestId: string, status: string) => {
     try {
       const response = await fetch(`http://localhost:8000/appointments/${requestId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({ status }),
       });
 
       if (response.ok) {
-        // Refresh the requests
+        // Refresh requests
         fetchData();
-      } else {
-        alert('Failed to update request status');
       }
     } catch (error) {
-      console.error('Error updating request:', error);
-      alert('Failed to update request status');
+      console.error('Error updating status:', error);
     }
-  };
-
-  const handleLogout = async () => {
-    await signOut();
-    router.push('/');
   };
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-orange-600 text-lg">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
-  if (!user) {
-    return null; // Will redirect to login
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-orange-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <Link href="/" className="flex items-center space-x-2">
-                <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">FB</span>
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900">Profiles by FinderBee</h1>
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link href="/" className="text-2xl font-bold text-orange-900">
+                Profiles
               </Link>
-              <p className="text-gray-600 mt-1">Welcome back, {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email}!</p>
             </div>
+            
             <div className="flex items-center space-x-4">
-              <Link
-                href="/profile/new"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Create Profile
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Logout
-              </button>
+              <span className="text-orange-700">Welcome, {user?.firstName}</span>
+              <Button variant="outline" onClick={() => signOut()}>
+                Sign Out
+              </Button>
             </div>
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-8">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('profiles')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'profiles'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              My Profiles ({profiles.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('requests')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'requests'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Requests ({requests.filter(r => r.status === 'pending').length})
-            </button>
-          </nav>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-orange-900 mb-2">Dashboard</h1>
+          <p className="text-orange-700">Manage your profiles and connection requests</p>
         </div>
 
-        {/* Profiles Tab */}
-        {activeTab === 'profiles' && (
-          <div>
+        <Tabs defaultValue="profiles" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="profiles">My Profiles ({profiles.length})</TabsTrigger>
+            <TabsTrigger value="requests">Requests ({requests.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profiles" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold text-orange-900">Your Profiles</h2>
+              <Button asChild>
+                <Link href="/profile/new">Create New Profile</Link>
+              </Button>
+            </div>
+
             {profiles.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="mx-auto h-24 w-24 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-gray-400 text-2xl">👤</span>
-                </div>
-                <h3 className="mt-4 text-lg font-medium text-gray-900">No profiles yet</h3>
-                <p className="mt-2 text-gray-500">Create your first profile to start receiving appointment requests.</p>
-                <Link
-                  href="/profile/new"
-                  className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  Create Profile
-                </Link>
-              </div>
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-orange-900 mb-2">No profiles yet</h3>
+                  <p className="text-orange-600 text-center mb-6 max-w-md">
+                    Create your first profile to start getting discovered by AI agents worldwide.
+                  </p>
+                  <Button asChild>
+                    <Link href="/profile/new">Create Your First Profile</Link>
+                  </Button>
+                </CardContent>
+              </Card>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {profiles.map((profile) => (
-                  <div key={profile.id} className="bg-white rounded-lg shadow-md p-6">
-                    <h3 className="text-lg font-semibold text-gray-900">{profile.name}</h3>
-                    <p className="text-gray-600 mt-1">{profile.email}</p>
-                    <p className="text-gray-700 mt-3 text-sm">{profile.bio}</p>
+                  <Card key={profile.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-xl text-orange-900">{profile.name}</CardTitle>
+                          <CardDescription>{profile.email}</CardDescription>
+                        </div>
+                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                          {profile.name.charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                    </CardHeader>
                     
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-900">Skills:</h4>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {profile.skills.map((skill, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    <CardContent>
+                      <p className="text-orange-700 mb-4 line-clamp-3">{profile.bio}</p>
+                      
+                      {profile.skills.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-semibold text-orange-900 mb-2">Skills</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {profile.skills.slice(0, 3).map((skill, index) => (
+                              <Badge key={index} variant="secondary">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {profile.skills.length > 3 && (
+                              <Badge variant="outline">
+                                +{profile.skills.length - 3} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-900">Available for:</h4>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {profile.available_for.map((service, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                          >
-                            {service}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                      {profile.available_for.length > 0 && (
+                        <div className="mb-6">
+                          <h4 className="text-sm font-semibold text-orange-900 mb-2">Available For</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {profile.available_for.map((item, index) => (
+                              <Badge key={index} className="capitalize">
+                                {item}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <Button variant="outline" asChild className="w-full">
+                        <Link href={`/profile/${profile.id}`}>View Profile</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
-          </div>
-        )}
+          </TabsContent>
 
-        {/* Requests Tab */}
-        {activeTab === 'requests' && (
-          <div>
+          <TabsContent value="requests" className="space-y-6">
+            <h2 className="text-2xl font-semibold text-orange-900">Connection Requests</h2>
+
             {requests.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="mx-auto h-24 w-24 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-gray-400 text-2xl">📋</span>
-                </div>
-                <h3 className="mt-4 text-lg font-medium text-gray-900">No requests yet</h3>
-                <p className="mt-2 text-gray-500">When people request appointments or quotes, they&apos;ll appear here.</p>
-              </div>
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-4.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-orange-900 mb-2">No requests yet</h3>
+                  <p className="text-orange-600 text-center max-w-md">
+                    When AI agents discover your profiles, connection requests will appear here.
+                  </p>
+                </CardContent>
+              </Card>
             ) : (
-              <div className="space-y-6">
-                {requests.map((request) => {
-                  const profile = profiles.find(p => p.id === request.profile_id);
-                  return (
-                    <div key={request.id} className="bg-white rounded-lg shadow-md p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {request.request_type.charAt(0).toUpperCase() + request.request_type.slice(1)} Request
-                            </h3>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              request.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {request.status}
-                            </span>
-                          </div>
-                          
-                          <p className="text-gray-600 mt-1">
-                            For profile: <strong>{profile?.name || 'Unknown Profile'}</strong>
-                          </p>
-                          
-                          <div className="mt-3">
-                            <h4 className="text-sm font-medium text-gray-900">From:</h4>
-                            <p className="text-gray-700">{request.requester_name} ({request.requester_email})</p>
-                          </div>
-
-                          <div className="mt-3">
-                            <h4 className="text-sm font-medium text-gray-900">Message:</h4>
-                            <p className="text-gray-700">{request.message}</p>
-                          </div>
-
-                          {request.preferred_time && (
-                            <div className="mt-3">
-                              <h4 className="text-sm font-medium text-gray-900">Preferred Time:</h4>
-                              <p className="text-gray-700">{request.preferred_time}</p>
-                            </div>
-                          )}
-
-                          <p className="text-xs text-gray-500 mt-3">
-                            Received: {new Date(request.created_at).toLocaleDateString()}
-                          </p>
+              <div className="space-y-4">
+                {requests.map((request) => (
+                  <Card key={request.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg text-orange-900">
+                            {request.requester_name}
+                          </CardTitle>
+                          <CardDescription>{request.requester_email}</CardDescription>
                         </div>
-
-                        {request.status === 'pending' && (
-                          <div className="ml-4 flex space-x-2">
-                            <button
-                              onClick={() => handleRequestAction(request.id, 'accepted')}
-                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                            >
-                              Accept
-                            </button>
-                            <button
-                              onClick={() => handleRequestAction(request.id, 'rejected')}
-                              className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={request.status === 'pending' ? 'secondary' : 'default'}>
+                            {request.status}
+                          </Badge>
+                          <Badge variant="outline" className="capitalize">
+                            {request.request_type}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    </CardHeader>
+                    
+                    <CardContent>
+                      <p className="text-orange-700 mb-4">{request.message}</p>
+                      
+                      {request.preferred_time && (
+                        <p className="text-sm text-orange-600 mb-4">
+                          <strong>Preferred Time:</strong> {request.preferred_time}
+                        </p>
+                      )}
+
+                      {request.status === 'pending' && (
+                        <div className="flex space-x-3">
+                          <Button 
+                            onClick={() => handleStatusUpdate(request.id, 'accepted')}
+                            className="flex-1"
+                          >
+                            Accept
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => handleStatusUpdate(request.id, 'rejected')}
+                            className="flex-1"
+                          >
+                            Decline
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
-          </div>
-        )}
-      </main>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
