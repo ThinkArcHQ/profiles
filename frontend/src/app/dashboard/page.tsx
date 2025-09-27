@@ -181,20 +181,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Profiles</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProfiles}</div>
-            <p className="text-xs text-muted-foreground">
-              Available for discovery
-            </p>
-          </CardContent>
-        </Card>
-        
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
@@ -236,9 +223,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="discover" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="discover">Discover Profiles</TabsTrigger>
+      <Tabs defaultValue="meetings" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="meetings" id="meetings">
             Meeting Requests ({meetingRequests.length})
           </TabsTrigger>
@@ -250,40 +236,23 @@ export default function DashboardPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="discover" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Discover Professionals
-              </CardTitle>
-              <CardDescription>
-                Search and connect with professionals in your field or find experts for your projects
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SearchProfiles limit={6} />
-              <div className="mt-6 text-center">
-                <Button asChild variant="outline">
-                  <Link href="/profiles">
-                    View All Profiles
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="meetings" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Meeting Requests
-              </CardTitle>
-              <CardDescription>
-                Requests for meetings and consultations
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Recent Meeting Requests
+                </CardTitle>
+                <CardDescription>
+                  Latest requests for meetings and consultations
+                </CardDescription>
+              </div>
+              <Link href="/meeting-requests">
+                <Button variant="outline" size="sm">
+                  View All ({meetingRequests.length})
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
               {meetingRequests.length === 0 ? (
@@ -294,7 +263,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {meetingRequests.map((request) => (
+                  {meetingRequests.slice(0, 3).map((request) => (
                     <div key={request.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
@@ -306,7 +275,7 @@ export default function DashboardPage() {
                           {request.status}
                         </Badge>
                       </div>
-                      <p className="text-sm mb-3">{request.message}</p>
+                      <p className="text-sm mb-3 line-clamp-2">{request.message}</p>
                       {request.preferred_time && (
                         <p className="text-sm text-gray-600 mb-3">
                           Preferred time: {new Date(request.preferred_time).toLocaleString()}
@@ -331,6 +300,15 @@ export default function DashboardPage() {
                       )}
                     </div>
                   ))}
+                  {meetingRequests.length > 3 && (
+                    <div className="text-center pt-2">
+                      <Link href="/meeting-requests">
+                        <Button variant="ghost" size="sm">
+                          View {meetingRequests.length - 3} more requests →
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -339,14 +317,21 @@ export default function DashboardPage() {
 
         <TabsContent value="quotes" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Quote className="h-5 w-5" />
-                Quote Requests
-              </CardTitle>
-              <CardDescription>
-                Requests for project quotes and estimates
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Quote className="h-5 w-5" />
+                  Recent Quote Requests
+                </CardTitle>
+                <CardDescription>
+                  Latest requests for project quotes and estimates
+                </CardDescription>
+              </div>
+              <Link href="/quote-requests">
+                <Button variant="outline" size="sm">
+                  View All ({quoteRequests.length})
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
               {quoteRequests.length === 0 ? (
@@ -357,7 +342,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {quoteRequests.map((request) => (
+                  {quoteRequests.slice(0, 3).map((request) => (
                     <div key={request.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
@@ -369,7 +354,7 @@ export default function DashboardPage() {
                           {request.status}
                         </Badge>
                       </div>
-                      <p className="text-sm mb-3">{request.message}</p>
+                      <p className="text-sm mb-3 line-clamp-2">{request.message}</p>
                       {request.status === 'pending' && (
                         <div className="flex gap-2">
                           <Button 
@@ -389,6 +374,15 @@ export default function DashboardPage() {
                       )}
                     </div>
                   ))}
+                  {quoteRequests.length > 3 && (
+                    <div className="text-center pt-2">
+                      <Link href="/quote-requests">
+                        <Button variant="ghost" size="sm">
+                          View {quoteRequests.length - 3} more requests →
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -397,14 +391,21 @@ export default function DashboardPage() {
 
         <TabsContent value="sent" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Send className="h-5 w-5" />
-                Sent Requests
-              </CardTitle>
-              <CardDescription>
-                Requests you've sent to other professionals
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Send className="h-5 w-5" />
+                  Recent Sent Requests
+                </CardTitle>
+                <CardDescription>
+                  Latest requests you&apos;ve sent to other professionals
+                </CardDescription>
+              </div>
+              <Link href="/sent-requests">
+                <Button variant="outline" size="sm">
+                  View All ({sentRequests.length})
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
               {sentRequests.length === 0 ? (
@@ -415,7 +416,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {sentRequests.map((request) => (
+                  {sentRequests.slice(0, 3).map((request) => (
                     <div key={request.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
@@ -427,12 +428,21 @@ export default function DashboardPage() {
                           {request.status}
                         </Badge>
                       </div>
-                      <p className="text-sm mb-2">{request.message}</p>
+                      <p className="text-sm mb-2 line-clamp-2">{request.message}</p>
                       <p className="text-xs text-gray-500">
                         Sent on {new Date(request.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   ))}
+                  {sentRequests.length > 3 && (
+                    <div className="text-center pt-2">
+                      <Link href="/sent-requests">
+                        <Button variant="ghost" size="sm">
+                          View {sentRequests.length - 3} more requests →
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

@@ -58,17 +58,17 @@ const menuItems = [
   },
   {
     title: 'Meeting Requests',
-    url: '/dashboard#meetings',
+    url: '/meeting-requests',
     icon: MessageSquare,
   },
   {
     title: 'Quote Requests',
-    url: '/dashboard#quotes',
+    url: '/quote-requests',
     icon: Quote,
   },
   {
     title: 'Sent Requests',
-    url: '/dashboard#sent',
+    url: '/sent-requests',
     icon: Send,
   },
 ];
