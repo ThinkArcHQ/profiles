@@ -110,7 +110,7 @@ export default async function Home() {
               </Button>
 
               {!user && (
-                <Button variant="outline" size="lg" asChild className="text-lg px-8 py-6 rounded-2xl border-2 border-orange-500/50 text-white hover:bg-orange-500 hover:text-white backdrop-blur-sm">
+                <Button variant="outline" size="lg" asChild className="text-lg px-8 py-6 rounded-2xl border-2 border-orange-500/50 hover:bg-orange-500 hover:text-white backdrop-blur-sm">
                   <Link href="#profiles" className="flex items-center">
                     View Profiles
                     <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,22 +199,19 @@ export default async function Home() {
       </section>
 
       {/* AI Agent Builders Section */}
-      <section className="py-24 bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
-        {/* Background patterns */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-orange-600/5 to-transparent"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(251,146,60,0.3),transparent_70%)]"></div>
+      <section className="py-24 bg-orange-500 relative overflow-hidden">
         
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-8">For AI Agent Builders</h2>
-          <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-orange-500/20">
-            <p className="text-orange-300 mb-6 text-xl font-semibold">MCP Endpoint:</p>
+          <div className="bg-white rounded-3xl p-8 border border-gray-200">
+            <p className="text-gray-800 mb-6 text-xl font-semibold">MCP Endpoint:</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8">
-              <code className="bg-black/50 text-orange-400 px-6 py-4 rounded-2xl text-lg font-mono border border-orange-500/30 min-w-0">
+              <code className="bg-gray-100 text-gray-800 px-6 py-4 rounded-2xl text-lg font-mono border border-gray-200 min-w-0">
                 https://profiles.finderbee.ai/mcp
               </code>
               <ClipboardButton textToCopy="https://profiles.finderbee.ai/mcp" />
             </div>
-            <p className="text-gray-300 text-lg leading-relaxed">
+            <p className="text-gray-600 text-lg leading-relaxed">
               Integrate with our profile database to discover and connect with talented individuals for your AI agents.
             </p>
           </div>
@@ -228,12 +225,7 @@ export default async function Home() {
             {/* Brand */}
             <div className="md:col-span-2">
               <div className="flex items-center space-x-4 mb-6">
-                <div className="relative">
-                  <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-xl">P</span>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-gradient-to-br from-green-400 to-green-500 rounded-full border-2 border-black"></div>
-                </div>
+
                 <div>
                   <h3 className="text-2xl font-bold text-white">Profiles by FinderBee.ai</h3>
                   <p className="text-orange-400">by ThinkArc, Inc.</p>
