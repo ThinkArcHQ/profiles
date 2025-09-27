@@ -132,7 +132,7 @@ async def get_profiles():
 
 @app.post("/profiles", response_model=Profile)
 async def create_profile(profile: ProfileCreate, current_user = Depends(require_auth)):
-    """Create a new profile."""
+    """Create or update user's profile (only one profile per user)."""
     profile_data = profile.model_dump()
     new_profile = db.create_profile(current_user["id"], profile_data)
     return Profile(**new_profile)
@@ -151,15 +151,33 @@ async def get_profile(profile_id: str):
         raise HTTPException(status_code=404, detail="Profile not found")
     return Profile(**profile)
 
+@app.put("/profiles/{profile_id}", response_model=Profile)
+async def update_profile(profile_id: str, profile: ProfileCreate, current_user = Depends(require_auth)):
+    """Update a profile. Users can only update their own profile."""
+    existing_profile = db.get_profile_by_id(profile_id)
+    if not existing_profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    
+    if existing_profile["user_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Not authorized to update this profile")
+    
+    try:
+        profile_data = profile.model_dump()
+        updated_profile = db.update_profile(profile_id, profile_data)
+        return Profile(**updated_profile)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 @app.post("/appointments")
-async def request_appointment(request: AppointmentRequest):
+async def request_appointment(request: AppointmentRequest, current_user = Depends(optional_auth)):
     """Request an appointment, quote, or meeting with a profile."""
     profile = db.get_profile_by_id(request.profile_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     
     request_data = request.model_dump()
-    new_request = db.create_appointment_request(request_data)
+    sender_user_id = current_user["id"] if current_user else None
+    new_request = db.create_appointment_request(request_data, sender_user_id)
     
     return {"message": "Request submitted successfully", "request_id": new_request["id"]}
 
@@ -167,6 +185,26 @@ async def request_appointment(request: AppointmentRequest):
 async def get_received_appointments(current_user = Depends(require_auth)):
     """Get appointment requests received by current user."""
     requests = db.get_requests_by_user_id(current_user["id"])
+    return [AppointmentRequestResponse(**req) for req in requests]
+
+@app.get("/appointments/received/meetings", response_model=List[AppointmentRequestResponse])
+async def get_received_meeting_requests(current_user = Depends(require_auth)):
+    """Get meeting requests received by current user."""
+    requests = db.get_requests_by_user_id(current_user["id"])
+    meeting_requests = [req for req in requests if req["request_type"] == "meeting"]
+    return [AppointmentRequestResponse(**req) for req in meeting_requests]
+
+@app.get("/appointments/received/quotes", response_model=List[AppointmentRequestResponse])
+async def get_received_quote_requests(current_user = Depends(require_auth)):
+    """Get quote requests received by current user."""
+    requests = db.get_requests_by_user_id(current_user["id"])
+    quote_requests = [req for req in requests if req["request_type"] == "quote"]
+    return [AppointmentRequestResponse(**req) for req in quote_requests]
+
+@app.get("/appointments/sent", response_model=List[AppointmentRequestResponse])
+async def get_sent_appointments(current_user = Depends(require_auth)):
+    """Get appointment requests sent by current user."""
+    requests = db.get_sent_requests_by_user_id(current_user["id"])
     return [AppointmentRequestResponse(**req) for req in requests]
 
 @app.put("/appointments/{request_id}/status")

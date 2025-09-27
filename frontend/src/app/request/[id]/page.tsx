@@ -120,10 +120,12 @@ export default function RequestPage() {
     switch (type) {
       case 'appointments':
         return 'Schedule a one-on-one session';
-      case 'quotes':
-        return 'Request a project estimate or quote';
+      case 'meeting':
       case 'meetings':
         return 'Book a consultation or meeting';
+      case 'quote':
+      case 'quotes':
+        return 'Request a project estimate or quote';
       default:
         return '';
     }

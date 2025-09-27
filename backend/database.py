@@ -42,7 +42,13 @@ class DatabaseManager:
         return self.users.get(user_id)
     
     def create_profile(self, user_id: str, profile_data: dict) -> dict:
-        """Create a profile for a user."""
+        """Create a profile for a user. Only one profile per user is allowed."""
+        # Check if user already has a profile
+        existing_profiles = self.get_profiles_by_user_id(user_id)
+        if existing_profiles:
+            # Update existing profile instead of creating new one
+            return self.update_profile(existing_profiles[0]["id"], profile_data)
+        
         profile_id = str(uuid.uuid4())
         now = datetime.now()
         
@@ -60,6 +66,23 @@ class DatabaseManager:
         self.profiles[profile_id] = profile
         return profile
     
+    def update_profile(self, profile_id: str, profile_data: dict) -> dict:
+        """Update an existing profile."""
+        if profile_id not in self.profiles:
+            raise ValueError("Profile not found")
+        
+        profile = self.profiles[profile_id]
+        profile.update({
+            "name": profile_data["name"],
+            "email": profile_data["email"],
+            "skills": profile_data["skills"],
+            "bio": profile_data["bio"],
+            "available_for": profile_data["available_for"],
+            "updated_at": datetime.now()
+        })
+        
+        return profile
+    
     def get_profiles(self) -> list:
         """Get all profiles."""
         return list(self.profiles.values())
@@ -72,7 +95,7 @@ class DatabaseManager:
         """Get all profiles for a user."""
         return [p for p in self.profiles.values() if p["user_id"] == user_id]
     
-    def create_appointment_request(self, request_data: dict) -> dict:
+    def create_appointment_request(self, request_data: dict, sender_user_id: Optional[str] = None) -> dict:
         """Create an appointment request."""
         request_id = str(uuid.uuid4())
         request = {
@@ -84,7 +107,8 @@ class DatabaseManager:
             "preferred_time": request_data.get("preferred_time"),
             "request_type": request_data["request_type"],
             "status": "pending",
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
+            "sender_user_id": sender_user_id
         }
         self.appointment_requests[request_id] = request
         return request
@@ -98,6 +122,10 @@ class DatabaseManager:
         user_profiles = self.get_profiles_by_user_id(user_id)
         profile_ids = [p["id"] for p in user_profiles]
         return [r for r in self.appointment_requests.values() if r["profile_id"] in profile_ids]
+    
+    def get_sent_requests_by_user_id(self, user_id: str) -> list:
+        """Get all requests sent by a user."""
+        return [r for r in self.appointment_requests.values() if r.get("sender_user_id") == user_id]
     
     def update_request_status(self, request_id: str, status: str) -> bool:
         """Update request status."""
