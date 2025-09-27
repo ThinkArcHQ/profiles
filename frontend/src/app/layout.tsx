@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Profiles by FinderBee",
-  description: "Reimagining Connections in the Era of AI",
+  title: "Profiles by FinderBee.ai | Be Discovered by AI Agents Worldwide via MCP",
+  description: "Register your profile to be discoverable by AI agents globally through MCP (Model Context Protocol). Connect with intelligent systems worldwide at https://profiles.finderbee.ai/mcp by ThinkArc, Inc.",
 };
 
 export default function RootLayout({
