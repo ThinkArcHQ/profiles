@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import { authManager } from '@/lib/auth';
+import { useAuth } from '@workos-inc/authkit-nextjs/components';
+import { signOut } from '@workos-inc/authkit-nextjs';
 
 interface Profile {
   id: string;
@@ -32,7 +32,7 @@ interface AppointmentRequest {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [requests, setRequests] = useState<AppointmentRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,9 @@ export default function DashboardPage() {
       
       // Fetch user's profiles
       const profilesResponse = await fetch('http://localhost:8000/profiles/my', {
-        headers: authManager.getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
       if (profilesResponse.ok) {
@@ -65,7 +67,9 @@ export default function DashboardPage() {
 
       // Fetch received appointment requests
       const requestsResponse = await fetch('http://localhost:8000/appointments/received', {
-        headers: authManager.getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
       if (requestsResponse.ok) {
@@ -85,7 +89,6 @@ export default function DashboardPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...authManager.getAuthHeaders(),
         },
         body: JSON.stringify({ status }),
       });
@@ -103,7 +106,7 @@ export default function DashboardPage() {
   };
 
   const handleLogout = async () => {
-    await logout();
+    await signOut();
     router.push('/');
   };
 
@@ -135,7 +138,7 @@ export default function DashboardPage() {
                 </div>
                 <h1 className="text-2xl font-bold text-gray-900">Profiles by FinderBee</h1>
               </Link>
-              <p className="text-gray-600 mt-1">Welcome back, {user.name}!</p>
+              <p className="text-gray-600 mt-1">Welcome back, {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email}!</p>
             </div>
             <div className="flex items-center space-x-4">
               <Link
@@ -251,7 +254,7 @@ export default function DashboardPage() {
                   <span className="text-gray-400 text-2xl">📋</span>
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">No requests yet</h3>
-                <p className="mt-2 text-gray-500">When people request appointments or quotes, they'll appear here.</p>
+                <p className="mt-2 text-gray-500">When people request appointments or quotes, they&apos;ll appear here.</p>
               </div>
             ) : (
               <div className="space-y-6">

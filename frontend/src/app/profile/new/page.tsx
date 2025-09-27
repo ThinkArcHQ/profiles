@@ -3,18 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import { authManager } from '@/lib/auth';
+import { useAuth } from '@workos-inc/authkit-nextjs/components';
 
 export default function NewProfile() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     bio: '',
     skills: '',
-    available_for: [] as string[]
+    available_for: ['meetings'] as string[]
   });
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +23,7 @@ export default function NewProfile() {
     if (user) {
       setFormData(prev => ({
         ...prev,
-        name: user.name,
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
         email: user.email
       }));
     }
@@ -39,11 +39,6 @@ export default function NewProfile() {
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
-
-      // Add auth headers if user is logged in
-      if (user) {
-        Object.assign(headers, authManager.getAuthHeaders());
-      }
       
       const response = await fetch('http://localhost:8000/profiles', {
         method: 'POST',
@@ -67,13 +62,14 @@ export default function NewProfile() {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to create profile');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating profile:', error);
-      if (error.message.includes('Authentication required')) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create profile. Please try again.';
+      if (errorMessage.includes('Authentication required')) {
         alert('Please sign in to create a profile.');
         router.push('/login');
       } else {
-        alert(error.message || 'Failed to create profile. Please try again.');
+        alert(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -101,179 +97,221 @@ export default function NewProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-3">
-              <Link href="/" className="flex items-center space-x-2">
-                <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">FB</span>
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900">Profiles by FinderBee</h1>
-              </Link>
+    <div className="grid min-h-svh lg:grid-cols-2">
+      {/* Left Side - Form */}
+      <div className="flex flex-col gap-4 p-6 md:p-10">
+        <div className="flex justify-center gap-2 md:justify-start">
+          <Link href="/" className="flex items-center gap-2 font-medium">
+            <div className="bg-orange-500 text-white flex size-6 items-center justify-center rounded-md">
+              <span className="text-xs font-bold">P</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                href={user ? "/dashboard" : "/"}
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                {user ? "Dashboard" : "Home"}
-              </Link>
-              {!user && (
-                <Link
-                  href="/login"
-                  className="text-blue-600 hover:text-blue-500 transition-colors"
-                >
-                  Sign In
-                </Link>
-              )}
+            Profiles
+          </Link>
+        </div>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-md">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <h1 className="text-2xl font-bold">Create Your Profile</h1>
+                <p className="text-muted-foreground text-sm text-balance">
+                  {user 
+                    ? "Set up your profile to be discovered by AI agents worldwide"
+                    : "Join our community and become discoverable by AI agents"
+                  }
+                </p>
+                {!user && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 <Link href="/login" className="text-orange-600 hover:text-orange-700 underline font-medium transition-colors">Sign in</Link> to manage your profiles
+                  </p>
+                )}
+              </div>
+
+              {/* Step Indicator */}
+              <div className="flex justify-center gap-2">
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs ${currentStep === 1 ? 'bg-orange-100 text-orange-700' : currentStep > 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  <span className="w-4 h-4 rounded-full bg-current text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                  <span className="font-medium">Basic</span>
+                </div>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs ${currentStep === 2 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'}`}>
+                  <span className="w-4 h-4 rounded-full bg-current text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                  <span className="font-medium">Details</span>
+                </div>
+              </div>
+
+              <div className="grid gap-6">
+                {currentStep === 1 && (
+                  <>
+                    <div className="grid gap-3">
+                      <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Your Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="What should people call you?"
+                        disabled={user ? true : false}
+                      />
+                      {user && (
+                        <p className="text-xs text-orange-600">✨ Name is automatically filled from your account</p>
+                      )}
+                    </div>
+
+                    <div className="grid gap-3">
+                      <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="m@example.com"
+                        disabled={user ? true : false}
+                      />
+                      {user && (
+                        <p className="text-xs text-orange-600">✨ Email is automatically filled from your account</p>
+                      )}
+                    </div>
+
+                    <div className="grid gap-3">
+                      <label htmlFor="bio" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Tell Your Story *
+                      </label>
+                      <textarea
+                        id="bio"
+                        required
+                        rows={4}
+                        value={formData.bio}
+                        onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                        placeholder="Share who you are, what you do, your interests, hobbies, or anything that makes you unique..."
+                      />
+                      <p className="text-xs text-muted-foreground">💡 Be yourself! AI agents are interested in all kinds of people.</p>
+                    </div>
+                  </>
+                )}
+
+                {currentStep === 2 && (
+                  <>
+                    <div className="grid gap-3">
+                      <label htmlFor="skills" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Your Talents & Interests *
+                      </label>
+                      <input
+                        type="text"
+                        id="skills"
+                        required
+                        value={formData.skills}
+                        onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Photography, Cooking, Teaching, Writing, Gaming, Art..."
+                      />
+                      <p className="text-xs text-muted-foreground">✨ Include anything you&apos;re good at or passionate about - separate with commas</p>
+                    </div>
+
+                    <div className="grid gap-3">
+                      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        How Would You Like to Connect? *
+                      </label>
+                      <div className="space-y-3">
+                        {[
+                          { value: 'meetings', label: 'Meetings', desc: 'General conversations, discussions, and connections' },
+                          { value: 'quotes', label: 'Services', desc: 'Professional work, consulting, or paid projects' }
+                        ].map((service) => (
+                          <div key={service.value} className="flex items-start space-x-3 p-3 border border-input rounded-md hover:border-orange-300 transition-colors">
+                            <input
+                              type="checkbox"
+                              id={service.value}
+                              checked={formData.available_for.includes(service.value)}
+                              onChange={(e) => handleAvailabilityChange(service.value, e.target.checked)}
+                              className="mt-1 h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                            />
+                            <div className="flex-1">
+                              <label htmlFor={service.value} className="text-sm font-medium cursor-pointer">
+                                {service.label}
+                              </label>
+                              <p className="text-xs text-muted-foreground mt-1">{service.desc}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {formData.available_for.length === 0 && (
+                        <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded-md border border-orange-200">Please select at least one way you&apos;d like to connect</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="flex justify-between pt-6">
+                  {currentStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+                    >
+                      Back
+                    </button>
+                  )}
+                  
+                  {currentStep < 2 ? (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(currentStep + 1)}
+                      disabled={!formData.name || !formData.email || !formData.bio}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 ml-auto"
+                    >
+                      Continue
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={loading || formData.available_for.length === 0}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 ml-auto"
+                    >
+                      {loading ? 'Creating Profile...' : 'Complete Profile'}
+                    </button>
+                  )}
+                </div>
+              </form>
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Form */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">Create Your Profile</h2>
-          <p className="mt-2 text-gray-600">
-            {user 
-              ? "Share your expertise with the AI-powered community"
-              : "Join our AI-powered networking platform"
-            }
-          </p>
-          {!user && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="text-sm text-blue-700">
-                💡 <Link href="/login" className="underline font-medium">Sign in</Link> to manage your profiles and receive appointment requests in your dashboard.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                id="name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                placeholder="Enter your full name"
-                disabled={user ? true : false}
-              />
-              {user && (
-                <p className="mt-1 text-sm text-gray-500">Name is automatically filled from your account</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                id="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                placeholder="Enter your email address"
-                disabled={user ? true : false}
-              />
-              {user && (
-                <p className="mt-1 text-sm text-gray-500">Email is automatically filled from your account</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-2">
-                Professional Bio *
-              </label>
-              <textarea
-                id="bio"
-                required
-                rows={4}
-                value={formData.bio}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                placeholder="Describe your expertise, experience, and what makes you unique..."
-              />
-            </div>
-
-            <div>
-              <label htmlFor="skills" className="block text-sm font-medium text-gray-700 mb-2">
-                Skills & Expertise *
-              </label>
-              <input
-                type="text"
-                id="skills"
-                required
-                value={formData.skills}
-                onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                placeholder="e.g., Python, AI, Machine Learning, Consulting (separate with commas)"
-              />
-              <p className="mt-1 text-sm text-gray-500">Separate multiple skills with commas</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-4">
-                Available Services *
-              </label>
-              <div className="space-y-3">
-                {[
-                  { value: 'appointments', label: 'Appointments', desc: 'One-on-one consultations and meetings' },
-                  { value: 'quotes', label: 'Quotes', desc: 'Project estimates and pricing consultations' },
-                  { value: 'meetings', label: 'Meetings', desc: 'Group discussions and collaborations' }
-                ].map((service) => (
-                  <div key={service.value} className="flex items-start space-x-3">
-                    <input
-                      type="checkbox"
-                      id={service.value}
-                      checked={formData.available_for.includes(service.value)}
-                      onChange={(e) => handleAvailabilityChange(service.value, e.target.checked)}
-                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <div className="flex-1">
-                      <label htmlFor={service.value} className="text-sm font-medium text-gray-900 cursor-pointer">
-                        {service.label}
-                      </label>
-                      <p className="text-sm text-gray-500">{service.desc}</p>
+          {/* Right side - Image/Brand */}
+          <div className="hidden lg:block relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-orange-800">
+              <div className="flex items-center justify-center h-full p-8">
+                <div className="max-w-md text-center text-white">
+                  <h2 className="text-3xl font-bold mb-6">Join the Future of Connection</h2>
+                  <p className="text-lg text-orange-100 mb-8">
+                    AI agents are looking for real people with unique perspectives and talents.
+                  </p>
+                  <div className="space-y-4 text-left">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-orange-200 rounded-full"></div>
+                      <span className="text-orange-100">Connect with intelligent AI agents</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-orange-200 rounded-full"></div>
+                      <span className="text-orange-100">Share your unique talents and interests</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-orange-200 rounded-full"></div>
+                      <span className="text-orange-100">Build meaningful connections</span>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
-              {formData.available_for.length === 0 && (
-                <p className="mt-2 text-sm text-red-600">Please select at least one service</p>
-              )}
             </div>
-
-            <div className="flex space-x-4 pt-6">
-              <Link
-                href={user ? "/dashboard" : "/"}
-                className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg text-center hover:bg-gray-200 transition-colors font-medium"
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                disabled={loading || formData.available_for.length === 0}
-                className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              >
-                {loading ? 'Creating Profile...' : 'Create Profile'}
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
-      </main>
-    </div>
+
   );
 }
