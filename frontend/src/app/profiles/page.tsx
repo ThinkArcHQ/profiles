@@ -22,30 +22,6 @@ import { cn } from '@/lib/utils';
 
 export default function ProfilesPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-
-  const toggleFilter = (filter: string) => {
-    setSelectedFilters(prev => 
-      prev.includes(filter) 
-        ? prev.filter(f => f !== filter)
-        : [...prev, filter]
-    );
-  };
-
-  const filterItems = [
-    { 
-      id: 'meetings', 
-      icon: Calendar, 
-      label: 'Meetings',
-      active: selectedFilters.includes('meetings')
-    },
-    { 
-      id: 'quotes', 
-      icon: Quote, 
-      label: 'Quotes',
-      active: selectedFilters.includes('quotes')
-    }
-  ];
 
   const navigationItems = [
     { 
@@ -83,47 +59,16 @@ export default function ProfilesPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* Top Search Bar */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-4">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <div className="relative flex-1">
+      <div className="sticky top-0 z-10 px-4 py-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search people..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-gray-50/50 border-gray-200 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-full h-11"
+              className="pl-10 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-full h-11"
             />
-          </div>
-        </div>
-        
-        {/* Always show dock filters */}
-        <div className="max-w-2xl mx-auto mt-6 flex justify-center">
-          <div className={cn(
-            "flex items-center gap-2 p-3 rounded-2xl",
-            "backdrop-blur-lg border shadow-lg",
-            "bg-white/90 border-gray-200",
-            "hover:shadow-xl"
-          )}>
-            {filterItems.map((item) => (
-              <Button
-                key={item.id}
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleFilter(item.id)}
-                className={cn(
-                  "relative group p-3 rounded-xl h-auto flex flex-col items-center gap-1 min-w-[70px]",
-                  "hover:bg-gray-100 transition-all duration-200",
-                  item.active && item.id === 'meetings' && "bg-blue-100 text-blue-800 hover:bg-blue-200",
-                  item.active && item.id === 'quotes' && "bg-green-100 text-green-800 hover:bg-green-200"
-                )}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="text-xs font-medium">{item.label}</span>
-                {item.active && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full" />
-                )}
-              </Button>
-            ))}
           </div>
         </div>
       </div>
