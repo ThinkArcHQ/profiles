@@ -11,7 +11,7 @@ interface Profile {
   email: string;
   skills: string[];
   bio: string;
-  available_for: string[];
+  availableFor: string[];
   created_at: string;
   updated_at: string;
 }
@@ -43,8 +43,8 @@ export default function RequestPage() {
         const data = await response.json();
         setProfile(data);
         // Set default request type if only one option is available
-        if (data.available_for.length === 1) {
-          setFormData(prev => ({ ...prev, request_type: data.available_for[0] }));
+        if (data.availableFor.length === 1) {
+          setFormData(prev => ({ ...prev, request_type: data.availableFor[0] }));
         }
       } else {
         throw new Error('Failed to fetch profile');
@@ -190,7 +190,7 @@ export default function RequestPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select a request type</option>
-                {profile.available_for.map((service) => (
+                {profile.availableFor.map((service) => (
                   <option key={service} value={service}>
                     {service.charAt(0).toUpperCase() + service.slice(1)} - {getRequestTypeDescription(service)}
                   </option>

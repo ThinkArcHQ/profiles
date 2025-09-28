@@ -221,7 +221,7 @@ export function SearchProfiles({ showFilters = true, limit = 12, className = '' 
                               </p>
                             </div>
                             <span className="text-xs text-gray-400 shrink-0 ml-3 font-medium">
-                              {getTimeAgo(profile.createdAt.toISOString())}
+                              {getTimeAgo(profile.createdAt instanceof Date ? profile.createdAt.toISOString() : profile.createdAt)}
                             </span>
                           </div>
                           

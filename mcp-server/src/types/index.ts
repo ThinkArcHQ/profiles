@@ -44,16 +44,20 @@ export interface MeetingRequestParams {
   requesterName: string;
   requesterEmail: string;
   message: string;
-  preferredTime?: string;
-  requestType: "meeting" | "quote";
+  meetingType: "consulting" | "mentoring" | "speaking" | "advising" | "investing";
+  preferredTimes?: string[];
+  company?: string;
+  linkedinUrl?: string;
 }
 
 /**
  * Meeting request result
  */
 export interface MeetingRequestResult {
+  success: boolean;
   requestId: string;
-  profileName: string;
+  message: string;
+  estimatedResponseTime: string;
 }
 
 /**

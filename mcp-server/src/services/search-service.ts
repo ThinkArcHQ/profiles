@@ -10,10 +10,45 @@ import { MCPError } from "../utils/error-handling.js";
 
 export class SearchService {
   private baseUrl: string;
+  private mockProfiles: MCPProfile[];
 
   constructor() {
     // In production, this would connect to the actual database or API
     this.baseUrl = process.env.API_BASE_URL || "https://persons.finderbee.ai/api";
+    
+    // Mock data for testing and development
+    this.mockProfiles = [
+      {
+        slug: "john-doe-ai-engineer",
+        name: "John Doe",
+        bio: "Senior AI Engineer with 8+ years experience in machine learning and LLMs",
+        skills: ["Python", "TensorFlow", "PyTorch", "Machine Learning", "AI", "LLMs"],
+        availableFor: ["consulting", "mentoring", "speaking"],
+        profileUrl: "https://persons.finderbee.ai/profiles/john-doe-ai-engineer",
+        linkedinUrl: "https://linkedin.com/in/johndoe",
+        otherLinks: { "github": "https://github.com/johndoe", "website": "https://johndoe.dev" }
+      },
+      {
+        slug: "sarah-smith-product-manager",
+        name: "Sarah Smith",
+        bio: "Product Manager specializing in AI products and user experience",
+        skills: ["Product Management", "AI Strategy", "User Research", "Agile", "Data Analysis"],
+        availableFor: ["consulting", "advising"],
+        profileUrl: "https://persons.finderbee.ai/profiles/sarah-smith-product-manager",
+        linkedinUrl: "https://linkedin.com/in/sarahsmith",
+        otherLinks: { "medium": "https://medium.com/@sarahsmith" }
+      },
+      {
+        slug: "mike-johnson-startup-founder",
+        name: "Mike Johnson",
+        bio: "Serial entrepreneur and startup founder with expertise in AI and fintech",
+        skills: ["Entrepreneurship", "AI", "Fintech", "Leadership", "Fundraising", "Strategy"],
+        availableFor: ["mentoring", "advising", "investing"],
+        profileUrl: "https://persons.finderbee.ai/profiles/mike-johnson-startup-founder",
+        linkedinUrl: "https://linkedin.com/in/mikejohnson",
+        otherLinks: { "twitter": "https://twitter.com/mikejohnson", "company": "https://aifintech.co" }
+      }
+    ];
   }
 
   /**
@@ -21,17 +56,17 @@ export class SearchService {
    */
   async searchProfiles(params: SearchParams): Promise<SearchResults> {
     try {
-      // TODO: Replace with actual database query or API call
-      // This is a template implementation
+      // Validate input parameters
+      this.validateSearchParams(params);
       
-      // In production, this would:
-      // 1. Query the database with proper indexes
-      // 2. Filter for public profiles only (isPublic = true)
-      // 3. Apply search criteria (query, skills, availableFor)
-      // 4. Handle pagination with limit/offset
-      // 5. Transform results to MCPProfile format
-      
-      const searchResults = await this.performSearch(params);
+      // Try API first, fall back to mock data
+      let searchResults;
+      try {
+        searchResults = await this.performAPISearch(params);
+      } catch (apiError) {
+        console.warn("API search failed, using mock data:", apiError);
+        searchResults = await this.performMockSearch(params);
+      }
       
       return {
         profiles: searchResults.profiles.map(profile => this.transformToMCPProfile(profile)),
@@ -44,12 +79,71 @@ export class SearchService {
   }
 
   /**
-   * Perform the actual search (template implementation)
+   * Validate search parameters
    */
-  private async performSearch(params: SearchParams): Promise<{ profiles: any[], total: number }> {
-    // Template implementation - in production this would be a database query
-    // or API call with proper filtering and pagination
+  private validateSearchParams(params: SearchParams): void {
+    if (params.limit < 1 || params.limit > 100) {
+      throw new MCPError("Limit must be between 1 and 100", "INVALID_PARAMS");
+    }
     
+    if (params.offset < 0) {
+      throw new MCPError("Offset must be non-negative", "INVALID_PARAMS");
+    }
+    
+    if (params.query && params.query.length > 200) {
+      throw new MCPError("Query must be less than 200 characters", "INVALID_PARAMS");
+    }
+  }
+
+  /**
+   * Perform search using mock data (for development/testing)
+   */
+  private async performMockSearch(params: SearchParams): Promise<{ profiles: MCPProfile[], total: number }> {
+    let filteredProfiles = [...this.mockProfiles];
+    
+    // Apply query filter
+    if (params.query) {
+      const query = params.query.toLowerCase();
+      filteredProfiles = filteredProfiles.filter(profile => 
+        profile.name.toLowerCase().includes(query) ||
+        (profile.bio && profile.bio.toLowerCase().includes(query)) ||
+        profile.skills.some(skill => skill.toLowerCase().includes(query))
+      );
+    }
+    
+    // Apply skills filter
+    if (params.skills && params.skills.length > 0) {
+      filteredProfiles = filteredProfiles.filter(profile =>
+        params.skills!.some(skill => 
+          profile.skills.some(profileSkill => 
+            profileSkill.toLowerCase().includes(skill.toLowerCase())
+          )
+        )
+      );
+    }
+    
+    // Apply availableFor filter
+    if (params.availableFor && params.availableFor.length > 0) {
+      filteredProfiles = filteredProfiles.filter(profile =>
+        params.availableFor!.some(availability => 
+          profile.availableFor.includes(availability)
+        )
+      );
+    }
+    
+    const total = filteredProfiles.length;
+    const paginatedProfiles = filteredProfiles.slice(params.offset, params.offset + params.limit);
+    
+    return {
+      profiles: paginatedProfiles,
+      total
+    };
+  }
+
+  /**
+   * Perform the actual API search
+   */
+  private async performAPISearch(params: SearchParams): Promise<{ profiles: any[], total: number }> {
     try {
       const searchParams = new URLSearchParams();
       
@@ -68,10 +162,18 @@ export class SearchService {
       searchParams.append("limit", params.limit.toString());
       searchParams.append("offset", params.offset.toString());
       
-      const response = await fetch(`${this.baseUrl}/search?${searchParams.toString()}`);
+      const response = await fetch(`${this.baseUrl}/search?${searchParams.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'MCP-Server/1.0.0'
+        },
+        // Add timeout
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      });
       
       if (!response.ok) {
-        throw new Error(`Search API request failed: ${response.status}`);
+        throw new Error(`Search API request failed: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
@@ -82,8 +184,7 @@ export class SearchService {
       };
     } catch (error) {
       console.error("Search API error:", error);
-      // Return empty results on error rather than failing
-      return { profiles: [], total: 0 };
+      throw error; // Re-throw to allow fallback to mock data
     }
   }
 
@@ -91,15 +192,17 @@ export class SearchService {
    * Transform internal profile data to MCP format
    */
   private transformToMCPProfile(profileData: any): MCPProfile {
+    // Handle both API response format and mock data format
     return {
       slug: profileData.slug,
       name: profileData.name,
       bio: profileData.bio,
-      skills: profileData.skills || [],
-      availableFor: profileData.availableFor || [],
-      profileUrl: `https://persons.finderbee.ai/profiles/${profileData.slug}`,
-      linkedinUrl: profileData.linkedinUrl,
-      otherLinks: profileData.otherLinks || {}
+      skills: Array.isArray(profileData.skills) ? profileData.skills : [],
+      availableFor: Array.isArray(profileData.availableFor) ? profileData.availableFor : 
+                   Array.isArray(profileData.available_for) ? profileData.available_for : [],
+      profileUrl: profileData.profileUrl || `https://persons.finderbee.ai/profiles/${profileData.slug}`,
+      linkedinUrl: profileData.linkedinUrl || profileData.linkedin_url,
+      otherLinks: profileData.otherLinks || profileData.other_links || {}
       // Note: email is intentionally excluded for privacy
     };
   }

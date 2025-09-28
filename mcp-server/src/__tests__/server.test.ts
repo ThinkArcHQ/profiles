@@ -50,12 +50,16 @@ describe("Validation", () => {
         profileSlug: "john-doe",
         requesterName: "AI Assistant",
         requesterEmail: "ai@example.com",
-        message: "Meeting request",
-        requestType: "meeting"
+        message: "Meeting request for collaboration",
+        meetingType: "consulting"
       };
 
       const result = validateMeetingInput(input);
-      expect(result).toEqual(input);
+      expect(result.profileSlug).toBe(input.profileSlug);
+      expect(result.requesterName).toBe(input.requesterName);
+      expect(result.requesterEmail).toBe(input.requesterEmail);
+      expect(result.message).toBe(input.message);
+      expect(result.meetingType).toBe(input.meetingType);
     });
 
     it("should throw error for invalid email", () => {
@@ -63,8 +67,8 @@ describe("Validation", () => {
         profileSlug: "john-doe",
         requesterName: "AI Assistant",
         requesterEmail: "invalid-email",
-        message: "Meeting request",
-        requestType: "meeting"
+        message: "Meeting request for collaboration",
+        meetingType: "consulting"
       };
 
       expect(() => validateMeetingInput(input)).toThrow(MCPError);

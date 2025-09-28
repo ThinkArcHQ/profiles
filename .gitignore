@@ -35,3 +35,5 @@ yarn-error.log*
 /tmp/
 *.tmp
 *.temp
+debug-profiles.js
+debug-profiles.mjs

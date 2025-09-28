@@ -120,14 +120,23 @@ class PersonsFinderBeeServer {
                 type: "string",
                 description: "Message explaining the purpose of the meeting request"
               },
-              preferredTime: {
+              meetingType: {
                 type: "string",
-                description: "Preferred meeting time (ISO 8601 format or natural language)"
+                enum: ["consulting", "mentoring", "speaking", "advising", "investing"],
+                description: "Type of meeting being requested"
               },
-              requestType: {
+              preferredTimes: {
+                type: "array",
+                items: { type: "string" },
+                description: "Array of preferred meeting times (ISO 8601 format or natural language)"
+              },
+              company: {
                 type: "string",
-                enum: ["meeting", "quote"],
-                description: "Type of request - meeting for general meetings, quote for service requests"
+                description: "Company or organization of the requester (optional)"
+              },
+              linkedinUrl: {
+                type: "string",
+                description: "LinkedIn profile URL of the requester (optional)"
               }
             },
             required: [
@@ -135,7 +144,7 @@ class PersonsFinderBeeServer {
               "requesterName", 
               "requesterEmail",
               "message",
-              "requestType"
+              "meetingType"
             ]
           }
         },
@@ -209,17 +218,17 @@ class PersonsFinderBeeServer {
   private async handleRequestMeeting(args: any) {
     const validatedArgs = validateMeetingInput(args);
     
-    const result = await this.meetingService.createMeetingRequest(validatedArgs);
+    const result = await this.meetingService.submitMeetingRequest(validatedArgs);
     
     return {
       content: [
         {
           type: "text",
           text: JSON.stringify({
-            success: true,
+            success: result.success,
             requestId: result.requestId,
-            message: `Meeting request sent successfully to ${validatedArgs.profileSlug}`,
-            profileName: result.profileName
+            message: result.message,
+            estimatedResponseTime: result.estimatedResponseTime
           }, null, 2)
         }
       ]
@@ -232,7 +241,7 @@ class PersonsFinderBeeServer {
   private async handleGetProfile(args: any) {
     const validatedArgs = validateProfileInput(args);
     
-    const profile = await this.profileService.getProfileBySlug(validatedArgs.profileSlug);
+    const profile = await this.profileService.getProfileBySlug({ profileSlug: validatedArgs.profileSlug });
     
     if (!profile) {
       return {

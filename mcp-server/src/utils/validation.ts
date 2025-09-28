@@ -24,9 +24,11 @@ const meetingInputSchema = z.object({
   profileSlug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
   requesterName: z.string().min(1).max(100),
   requesterEmail: z.string().email(),
-  message: z.string().min(1).max(1000),
-  preferredTime: z.string().optional(),
-  requestType: z.enum(["meeting", "quote"])
+  message: z.string().min(10).max(1000),
+  meetingType: z.enum(["consulting", "mentoring", "speaking", "advising", "investing"]),
+  preferredTimes: z.array(z.string()).optional(),
+  company: z.string().max(200).optional(),
+  linkedinUrl: z.string().url().optional()
 });
 
 /**
@@ -74,13 +76,24 @@ export function validateMeetingInput(input: any): MeetingRequestParams {
     const validated = meetingInputSchema.parse(input);
     
     // Additional validation
-    if (validated.preferredTime) {
-      // Try to parse the time to ensure it's valid
-      const parsedTime = new Date(validated.preferredTime);
-      if (isNaN(parsedTime.getTime())) {
-        // If ISO parsing fails, allow natural language but warn
-        console.warn("Preferred time is not in ISO format, will be processed as natural language");
+    if (validated.preferredTimes && validated.preferredTimes.length > 0) {
+      // Validate each preferred time
+      for (const time of validated.preferredTimes) {
+        const parsedTime = new Date(time);
+        if (isNaN(parsedTime.getTime())) {
+          // If ISO parsing fails, allow natural language but warn
+          console.warn(`Preferred time "${time}" is not in ISO format, will be processed as natural language`);
+        } else {
+          // Check if the time is in the future
+          if (parsedTime <= new Date()) {
+            throw new MCPError("Preferred times must be in the future", "VALIDATION_ERROR");
+          }
+        }
       }
+    }
+    
+    if (validated.linkedinUrl && !validated.linkedinUrl.includes('linkedin.com')) {
+      throw new MCPError("LinkedIn URL must be a valid LinkedIn profile URL", "VALIDATION_ERROR");
     }
     
     return validated;

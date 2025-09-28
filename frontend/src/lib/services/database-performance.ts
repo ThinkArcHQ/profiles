@@ -72,6 +72,8 @@ export class DatabasePerformanceService {
           linkedinUrl: profiles.linkedinUrl,
           otherLinks: profiles.otherLinks,
           createdAt: profiles.createdAt,
+          isPublic: profiles.isPublic,
+          isActive: profiles.isActive,
         })
         .from(profiles)
         .where(and(...whereConditions))

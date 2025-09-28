@@ -4,9 +4,27 @@ import Profiles from './Profiles';
 import ClipboardButton from './ClipboardButton';
 import { Button } from '@/components/ui/button';
 import { FeaturesSectionWithHoverEffects } from '@/components/blocks/feature-section-with-hover-effects';
+import { db } from '@/lib/db/connection';
+import { profiles } from '@/lib/db/schema';
+import { eq, and } from 'drizzle-orm';
 
 export default async function Home() {
   const { user } = await withAuth();
+  
+  // Check if user has a profile
+  let userProfile = null;
+  if (user) {
+    try {
+      const userProfiles = await db
+        .select()
+        .from(profiles)
+        .where(and(eq(profiles.workosUserId, user.id), eq(profiles.isActive, true)))
+        .limit(1);
+      userProfile = userProfiles.length > 0 ? userProfiles[0] : null;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
@@ -27,11 +45,19 @@ export default async function Home() {
                       Browse Profiles
                     </Link>
                   </Button>
-                  <Button asChild>
-                    <Link href="/profile/new">
-                      Register Profile
-                    </Link>
-                  </Button>
+                  {userProfile ? (
+                    <Button asChild>
+                      <Link href="/dashboard">
+                        Dashboard
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button asChild>
+                      <Link href="/profile/new">
+                        Register Profile
+                      </Link>
+                    </Button>
+                  )}
                   <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-white/20">
                     <div className="text-sm">
                       <span className="text-white/80">Welcome,</span>
@@ -100,14 +126,25 @@ export default async function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-              <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
-                <Link href="/profile/new" className="flex items-center">
-                  Create Your Profile
-                  <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </Link>
-              </Button>
+              {user && userProfile ? (
+                <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+                  <Link href="/dashboard" className="flex items-center">
+                    Go to Dashboard
+                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </Button>
+              ) : (
+                <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+                  <Link href="/profile/new" className="flex items-center">
+                    Create Your Profile
+                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </Link>
+                </Button>
+              )}
 
               {!user && (
                 <Button variant="outline" size="lg" asChild className="text-lg px-8 py-6 rounded-2xl border-2 border-orange-500/50 hover:bg-orange-500 hover:text-white backdrop-blur-sm">
@@ -156,11 +193,19 @@ export default async function Home() {
               <p className="text-orange-700 mb-6 max-w-2xl mx-auto">
                 Join the first social platform designed for AI agents. Create your profile and start receiving meeting requests and opportunities.
               </p>
-              <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
-                <Link href="/profile/new">
-                  Create Your Profile Now
-                </Link>
-              </Button>
+              {user && userProfile ? (
+                <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+                  <Link href="/dashboard">
+                    Go to Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+                  <Link href="/profile/new">
+                    Create Your Profile Now
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -183,11 +228,19 @@ export default async function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
-              <Link href="/profile/new">
-                Create Your Profile
-              </Link>
-            </Button>
+            {user && userProfile ? (
+              <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+                <Link href="/dashboard">
+                  Go to Dashboard
+                </Link>
+              </Button>
+            ) : (
+              <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
+                <Link href="/profile/new">
+                  Create Your Profile
+                </Link>
+              </Button>
+            )}
             
             <Button variant="outline" size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
               <Link href="/profiles">

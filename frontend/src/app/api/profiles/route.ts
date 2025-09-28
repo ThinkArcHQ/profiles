@@ -33,10 +33,11 @@ export const GET = createGETEndpoint('/api/profiles', getProfilesHandler);
 
 // POST /api/profiles - Create new profile
 const createProfileHandler = async (request: NextRequest, context: any) => {
-  const { user } = context;
+  const { user, validatedData } = context;
   
   try {
-    const body: RawCreateProfileInput = await request.json();
+    // Use validated body data from the API wrapper instead of reading request again
+    const body: RawCreateProfileInput = validatedData?.body || {};
     
     // Check if user already has a profile
     const existingProfile = await db
@@ -60,7 +61,7 @@ const createProfileHandler = async (request: NextRequest, context: any) => {
       skills: Array.isArray(body.skills) ? body.skills : 
               typeof body.skills === 'string' ? body.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
       availableFor: body.availableFor || body.available_for || ['meetings'],
-      isPublic: body.isPublic ?? (body.profile_visibility === 'public' || body.profile_visibility !== 'private'),
+      isPublic: body.isPublic ?? (body.profile_visibility !== 'private'),
       linkedinUrl: body.linkedinUrl || body.linkedin_url,
       otherLinks: body.otherLinks || body.other_links || {},
     };
