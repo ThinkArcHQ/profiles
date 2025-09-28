@@ -46,7 +46,7 @@ export default function ProfilesPage() {
       id: 'profile', 
       icon: Users, 
       label: 'Profile',
-      href: '/profile/new'
+      href: '/settings'
     },
     { 
       id: 'settings', 

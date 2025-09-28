@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 interface Profile {
   id: string;
+  slug?: string;
   name: string;
   email: string;
   skills: string[];
@@ -137,7 +138,7 @@ export default function RequestPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center py-6">
-            <Link href={`/profile/${profile.id}`} className="text-blue-600 hover:text-blue-700 mr-4">
+            <Link href={profile.slug ? `/profiles/${profile.slug}` : `/profile/${profile.id}`} className="text-blue-600 hover:text-blue-700 mr-4">
               ← Back to Profile
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">
@@ -258,7 +259,7 @@ export default function RequestPage() {
 
             <div className="flex gap-4 pt-6">
               <Link
-                href={`/profile/${profile.id}`}
+                href={profile.slug ? `/profiles/${profile.slug}` : `/profile/${profile.id}`}
                 className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-center hover:bg-gray-200 transition-colors"
               >
                 Cancel

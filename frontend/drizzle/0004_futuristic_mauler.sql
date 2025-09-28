@@ -1,0 +1,1 @@
+DROP INDEX "idx_profiles_bio_search";

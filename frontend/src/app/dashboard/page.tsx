@@ -8,15 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { SearchProfiles } from '@/components/search-profiles';
+import { PrivacyStatusIndicator, getPrivacyStatusFromProfile } from '@/components/privacy-status-indicator';
 import { 
-  Users, 
-  Calendar, 
   MessageSquare, 
   Quote, 
   Send, 
   Plus,
-  TrendingUp,
   Clock,
   CheckCircle
 } from 'lucide-react';
@@ -29,6 +26,8 @@ interface Profile {
   skills: string[];
   bio: string;
   available_for: string[];
+  isPublic: boolean;
+  isActive: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -165,7 +164,16 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <div className="flex items-center gap-4 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            {profile && (
+              <PrivacyStatusIndicator 
+                privacyStatus={getPrivacyStatusFromProfile(profile)}
+                variant="compact"
+                showTooltip={true}
+              />
+            )}
+          </div>
           <p className="text-gray-600 mt-1">
             Discover professionals and manage your connections
           </p>

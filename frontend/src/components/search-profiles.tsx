@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, User, Mail, Calendar, MessageSquare } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,26 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Link from 'next/link';
-
-interface Profile {
-  id: number;
-  name: string;
-  email: string;
-  bio: string | null;
-  skills: string[];
-  availableFor: string[];
-  createdAt: string;
-}
-
-interface SearchResult {
-  profiles: Profile[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-    hasMore: boolean;
-  };
-}
+import { ProfileSearchResult } from '@/lib/types/profile';
+import { PrivacyStatusIndicator, getPrivacyStatusFromProfile } from '@/components/privacy-status-indicator';
 
 interface SearchProfilesProps {
   showFilters?: boolean;
@@ -44,9 +25,9 @@ interface SearchProfilesProps {
 }
 
 export function SearchProfiles({ showFilters = true, limit = 12, className = '' }: SearchProfilesProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   const [availabilityFilter, setAvailabilityFilter] = useState('all');
-  const [results, setResults] = useState<SearchResult | null>(null);
+  const [results, setResults] = useState<ProfileSearchResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +49,7 @@ export function SearchProfiles({ showFilters = true, limit = 12, className = '' 
         throw new Error('Failed to search profiles');
       }
 
-      const data: SearchResult = await response.json();
+      const data: ProfileSearchResult = await response.json();
       setResults(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -118,6 +99,25 @@ export function SearchProfiles({ showFilters = true, limit = 12, className = '' 
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays}d ago`;
     return date.toLocaleDateString();
+  };
+
+  const trackProfileClick = async (profileId: number, source: string) => {
+    try {
+      await fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          profileId,
+          eventType: 'view',
+          source,
+        }),
+      });
+    } catch (error) {
+      // Silently fail - analytics shouldn't break the user experience
+      console.debug('Analytics tracking failed:', error);
+    }
   };
 
   return (
@@ -208,13 +208,20 @@ export function SearchProfiles({ showFilters = true, limit = 12, className = '' 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-gray-900 truncate text-base">{profile.name}</h3>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold text-gray-900 truncate text-base">{profile.name}</h3>
+                                <PrivacyStatusIndicator 
+                                  privacyStatus={getPrivacyStatusFromProfile({ isPublic: true, isActive: true })}
+                                  variant="badge"
+                                  showTooltip={true}
+                                />
+                              </div>
                               <p className="text-sm text-gray-500 mt-0.5">
                                 Just joined the community
                               </p>
                             </div>
                             <span className="text-xs text-gray-400 shrink-0 ml-3 font-medium">
-                              {getTimeAgo(profile.createdAt)}
+                              {getTimeAgo(profile.createdAt.toISOString())}
                             </span>
                           </div>
                           
@@ -239,7 +246,10 @@ export function SearchProfiles({ showFilters = true, limit = 12, className = '' 
                           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                             <div className="flex gap-2">
                               <Button asChild size="sm" variant="outline" className="rounded-full border-gray-300 hover:bg-gray-50 font-medium">
-                                <Link href={`/profile/${profile.id}`}>
+                                <Link 
+                                  href={`/profiles/${profile.slug}`}
+                                  onClick={() => trackProfileClick(profile.id, 'search')}
+                                >
                                   View Profile
                                 </Link>
                               </Button>

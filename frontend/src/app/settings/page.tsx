@@ -23,21 +23,29 @@ import {
   Trash2,
   AlertTriangle,
   Mail,
-  Phone,
   Globe,
+  Link,
   Lock,
-  Eye,
-  EyeOff
+  Sparkles
 } from 'lucide-react';
+import { PrivacySettingsComponent } from '@/components/privacy-settings';
+import { SlugEditor } from '@/components/slug-editor';
+import { ProfileUrlSharing } from '@/components/profile-url-sharing';
+import { PrivacyStatusIndicator, getPrivacyStatusFromProfile } from '@/components/privacy-status-indicator';
+import { useOnboarding } from '@/components/onboarding-flow';
 
 interface Profile {
   id: string;
+  slug: string;
   name: string;
   email: string;
   bio: string | null;
   skills: string[];
   availableFor: string[];
   isActive: boolean;
+  isPublic: boolean;
+  linkedinUrl?: string | null;
+  otherLinks?: Record<string, string>;
   createdAt: string;
   updatedAt: string;
 }
@@ -45,6 +53,7 @@ interface Profile {
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { resetOnboarding } = useOnboarding();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,6 +63,8 @@ export default function SettingsPage() {
     bio: '',
     skills: [] as string[],
     availableFor: [] as string[],
+    linkedinUrl: '',
+    otherLinks: {} as Record<string, string>,
   });
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -61,12 +72,7 @@ export default function SettingsPage() {
     marketingEmails: false,
     weeklyDigest: true,
   });
-  const [privacy, setPrivacy] = useState({
-    profileVisible: true,
-    showEmail: false,
-    allowDirectContact: true,
-    indexBySearchEngines: true,
-  });
+
 
   useEffect(() => {
     if (!authLoading) {
@@ -93,6 +99,8 @@ export default function SettingsPage() {
             bio: userProfile.bio || '',
             skills: userProfile.skills || [],
             availableFor: userProfile.availableFor || [],
+            linkedinUrl: userProfile.linkedinUrl || '',
+            otherLinks: userProfile.otherLinks || {},
           });
         }
       }
@@ -119,6 +127,8 @@ export default function SettingsPage() {
           bio: formData.bio,
           skills: formData.skills,
           available_for: formData.availableFor,
+          linkedin_url: formData.linkedinUrl,
+          other_links: formData.otherLinks,
         }),
       });
 
@@ -150,6 +160,58 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Error deleting profile:', error);
+    }
+  };
+
+  const handlePrivacyUpdate = async (privacySettings: { isPublic: boolean; showInSearch: boolean; allowMeetingRequests: boolean }) => {
+    if (!profile) return;
+
+    try {
+      const response = await fetch(`/api/profiles/${profile.id}/privacy`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isPublic: privacySettings.isPublic,
+          isActive: privacySettings.allowMeetingRequests,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(prev => prev ? { ...prev, isPublic: data.profile.isPublic, isActive: data.profile.isActive } : null);
+      } else {
+        throw new Error('Failed to update privacy settings');
+      }
+    } catch (error) {
+      console.error('Error updating privacy settings:', error);
+      throw error;
+    }
+  };
+
+  const handleSlugUpdate = async (newSlug: string) => {
+    if (!profile) return;
+
+    try {
+      const response = await fetch(`/api/profiles/${profile.id}/slug`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slug: newSlug }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(prev => prev ? { ...prev, slug: data.slug } : null);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update slug');
+      }
+    } catch (error) {
+      console.error('Error updating slug:', error);
+      throw error;
     }
   };
 
@@ -201,7 +263,7 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 space-y-6 p-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-600 mt-1">
@@ -209,48 +271,63 @@ export default function SettingsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12">
+          <Avatar className="h-12 w-12 flex-shrink-0">
             <AvatarFallback className="bg-orange-600 text-white">
               {user?.firstName ? getUserInitials(user.firstName + ' ' + (user.lastName || '')) : 'U'}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <p className="font-medium">{user?.firstName} {user?.lastName}</p>
-            <p className="text-sm text-gray-600">{user?.email}</p>
+          <div className="min-w-0">
+            <p className="font-medium truncate">{user?.firstName} {user?.lastName}</p>
+            <p className="text-sm text-gray-600 truncate">{user?.email}</p>
           </div>
         </div>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
-            Profile
+            <span className="hidden sm:inline">Profile</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Notifications
+          <TabsTrigger value="url" className="flex items-center gap-2">
+            <Link className="h-4 w-4" />
+            <span className="hidden sm:inline">URL</span>
           </TabsTrigger>
           <TabsTrigger value="privacy" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
-            Privacy
+            <span className="hidden sm:inline">Privacy</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">Notifications</span>
           </TabsTrigger>
           <TabsTrigger value="account" className="flex items-center gap-2">
             <SettingsIcon className="h-4 w-4" />
-            Account
+            <span className="hidden sm:inline">Account</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Profile Information
-              </CardTitle>
-              <CardDescription>
-                Update your professional profile information visible to others
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Profile Information
+                  </CardTitle>
+                  <CardDescription>
+                    Update your professional profile information visible to others
+                  </CardDescription>
+                </div>
+                {profile && (
+                  <PrivacyStatusIndicator 
+                    privacyStatus={getPrivacyStatusFromProfile(profile)}
+                    variant="compact"
+                    showTooltip={true}
+                  />
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {!profile ? (
@@ -359,6 +436,79 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedinUrl">LinkedIn Profile</Label>
+                    <Input 
+                      id="linkedinUrl" 
+                      type="url"
+                      value={formData.linkedinUrl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, linkedinUrl: e.target.value }))}
+                      placeholder="https://linkedin.com/in/yourprofile"
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label>Other Professional Links</Label>
+                    <div className="space-y-2">
+                      {Object.entries(formData.otherLinks).map(([name, url]) => (
+                        <div key={name} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                          <span className="text-sm font-medium">{name}:</span>
+                          <span className="text-sm text-gray-600 flex-1">{url}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setFormData(prev => {
+                                const newLinks = { ...prev.otherLinks };
+                                delete newLinks[name];
+                                return { ...prev, otherLinks: newLinks };
+                              });
+                            }}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="Link name"
+                          className="flex-1"
+                          id="newLinkName"
+                        />
+                        <Input 
+                          placeholder="https://..."
+                          className="flex-1"
+                          type="url"
+                          id="newLinkUrl"
+                        />
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            const nameInput = document.getElementById('newLinkName') as HTMLInputElement;
+                            const urlInput = document.getElementById('newLinkUrl') as HTMLInputElement;
+                            if (nameInput?.value && urlInput?.value) {
+                              setFormData(prev => ({
+                                ...prev,
+                                otherLinks: {
+                                  ...prev.otherLinks,
+                                  [nameInput.value]: urlInput.value
+                                }
+                              }));
+                              nameInput.value = '';
+                              urlInput.value = '';
+                            }
+                          }}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex gap-3">
                     <Button onClick={handleSaveProfile} disabled={saving}>
                       <Save className="h-4 w-4 mr-2" />
@@ -372,6 +522,35 @@ export default function SettingsPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="url" className="space-y-6">
+          {profile ? (
+            <div className="space-y-6">
+              <SlugEditor
+                currentSlug={profile.slug}
+                onUpdate={handleSlugUpdate}
+                isLoading={loading}
+                baseUrl={window.location.origin}
+              />
+              
+              <ProfileUrlSharing
+                slug={profile.slug}
+                isPublic={profile.isPublic}
+                profileUrl={`${window.location.origin}/profiles/${profile.slug}`}
+                profileId={parseInt(profile.id)}
+              />
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Link className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No profile yet</h3>
+              <p className="text-gray-600 mb-4">Create your profile to get a unique URL</p>
+              <Button onClick={() => router.push('/profile/new')}>
+                Create Profile
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6">
@@ -435,63 +614,26 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="privacy" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Privacy Settings
-              </CardTitle>
-              <CardDescription>
-                Control who can see your profile and contact you
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                {[
-                  {
-                    key: 'profileVisible',
-                    label: 'Profile Visibility',
-                    description: 'Make your profile visible to others',
-                    icon: <Eye className="h-4 w-4" />
-                  },
-                  {
-                    key: 'showEmail',
-                    label: 'Show Email Address',
-                    description: 'Display your email on your public profile',
-                    icon: <Mail className="h-4 w-4" />
-                  },
-                  {
-                    key: 'allowDirectContact',
-                    label: 'Allow Direct Contact',
-                    description: 'Let others contact you directly through the platform',
-                    icon: <Phone className="h-4 w-4" />
-                  },
-                  {
-                    key: 'indexBySearchEngines',
-                    label: 'Search Engine Indexing',
-                    description: 'Allow search engines to index your profile',
-                    icon: <Globe className="h-4 w-4" />
-                  },
-                ].map((setting) => (
-                  <div key={setting.key} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {setting.icon}
-                      <div>
-                        <Label className="font-medium">{setting.label}</Label>
-                        <p className="text-sm text-gray-600">{setting.description}</p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={privacy[setting.key as keyof typeof privacy]}
-                      onCheckedChange={(checked) => 
-                        setPrivacy(prev => ({ ...prev, [setting.key]: checked }))
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {profile ? (
+            <PrivacySettingsComponent
+              currentSettings={{
+                isPublic: profile.isPublic,
+                showInSearch: profile.isPublic && profile.isActive,
+                allowMeetingRequests: profile.isPublic && profile.isActive
+              }}
+              onUpdate={handlePrivacyUpdate}
+              loading={loading}
+            />
+          ) : (
+            <div className="text-center py-8">
+              <Shield className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No profile yet</h3>
+              <p className="text-gray-600 mb-4">Create your profile to manage privacy settings</p>
+              <Button onClick={() => router.push('/profile/new')}>
+                Create Profile
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="account" className="space-y-6">
@@ -527,6 +669,19 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <Badge variant="outline">Free</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Sparkles className="h-5 w-5 text-purple-400" />
+                    <div>
+                      <Label className="font-medium">Onboarding Tour</Label>
+                      <p className="text-sm text-gray-600">Replay the welcome tour</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={resetOnboarding}>
+                    Restart Tour
+                  </Button>
                 </div>
               </div>
 

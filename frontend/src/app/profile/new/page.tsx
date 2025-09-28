@@ -24,7 +24,10 @@ export default function NewProfile() {
     skills: '',
     profile_picture: null as File | null,
     available_for: ['meetings'] as string[],
-    profile_visibility: 'public' as 'public' | 'members_only' | 'connections_only'
+    profile_visibility: 'public' as 'public' | 'private',
+    is_public: true,
+    linkedin_url: '',
+    other_links: {} as Record<string, string>
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,8 +67,9 @@ export default function NewProfile() {
           bio: formData.headline, // Using headline as bio for now
           skills: skillsArray.slice(0, 5), // Limit to 5 skills
           available_for: formData.available_for,
-          location: formData.location,
-          profile_visibility: formData.profile_visibility
+          is_public: formData.is_public,
+          linkedin_url: formData.linkedin_url || undefined,
+          other_links: Object.keys(formData.other_links).length > 0 ? formData.other_links : undefined
         }),
       });
 
@@ -92,7 +96,7 @@ export default function NewProfile() {
   };
 
   const nextStep = () => {
-    if (currentStep < 2) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -103,7 +107,7 @@ export default function NewProfile() {
     }
   };
 
-  const progress = (currentStep / 2) * 100;
+  const progress = (currentStep / 3) * 100;
 
   if (authLoading) {
     return (
@@ -128,7 +132,7 @@ export default function NewProfile() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between text-sm text-orange-600 mb-2">
-            <span>Step {currentStep} of 2</span>
+            <span>Step {currentStep} of 3</span>
             <span>{Math.round(progress)}% Complete</span>
           </div>
           <Progress value={progress} className="h-2" />
@@ -139,10 +143,12 @@ export default function NewProfile() {
             <CardTitle className="text-xl text-black">
               {currentStep === 1 && "Identity & Location"}
               {currentStep === 2 && "Expertise & Availability"}
+              {currentStep === 3 && "Privacy & Links"}
             </CardTitle>
             <CardDescription className="text-orange-600">
               {currentStep === 1 && "How should AI agents identify and locate you?"}
               {currentStep === 2 && "What skills do you offer and how can people connect?"}
+              {currentStep === 3 && "Control your privacy and add professional links"}
             </CardDescription>
           </CardHeader>
 
@@ -279,8 +285,162 @@ export default function NewProfile() {
                 </div>
               )}
 
-              {/* Step 3: Privacy & Contact */}
-              {/* Removed - no longer needed since we don't share emails and have terms/privacy policy */}
+              {/* Step 3: Privacy & Links */}
+              {currentStep === 3 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-base font-semibold text-black">Profile Privacy *</Label>
+                    <p className="text-sm text-orange-600 mb-4">
+                      Control who can see your profile and how AI agents can discover you
+                    </p>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-start space-x-3 p-3 border border-orange-500 rounded-lg hover:bg-orange-50 transition-colors">
+                        <input
+                          type="radio"
+                          id="public"
+                          name="privacy"
+                          value="public"
+                          checked={formData.profile_visibility === 'public'}
+                          onChange={(e) => setFormData(prev => ({ 
+                            ...prev, 
+                            profile_visibility: 'public',
+                            is_public: true
+                          }))}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <Label htmlFor="public" className="text-sm font-medium cursor-pointer text-black">
+                            Public Profile (Recommended)
+                          </Label>
+                          <p className="text-xs text-orange-600 mt-1">
+                            Discoverable by AI agents worldwide, appears in search results
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start space-x-3 p-3 border border-orange-500 rounded-lg hover:bg-orange-50 transition-colors">
+                        <input
+                          type="radio"
+                          id="private"
+                          name="privacy"
+                          value="private"
+                          checked={formData.profile_visibility === 'private'}
+                          onChange={(e) => setFormData(prev => ({ 
+                            ...prev, 
+                            profile_visibility: 'private',
+                            is_public: false
+                          }))}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <Label htmlFor="private" className="text-sm font-medium cursor-pointer text-black">
+                            Private Profile
+                          </Label>
+                          <p className="text-xs text-orange-600 mt-1">
+                            Only visible to you, not discoverable by AI agents
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="linkedin_url" className="text-black">LinkedIn Profile</Label>
+                    <Input
+                      id="linkedin_url"
+                      type="url"
+                      value={formData.linkedin_url}
+                      onChange={(e) => setFormData(prev => ({ ...prev, linkedin_url: e.target.value }))}
+                      placeholder="https://linkedin.com/in/yourprofile"
+                    />
+                    <p className="text-sm text-orange-600 mt-1">
+                      Optional - helps AI agents understand your professional background
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label className="text-black">Other Professional Links</Label>
+                    <p className="text-sm text-orange-600 mb-3">
+                      Add links to your website, portfolio, or other professional profiles
+                    </p>
+                    
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Link name (e.g., Website, Portfolio)"
+                          className="flex-1"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              const nameInput = e.currentTarget;
+                              const urlInput = nameInput.nextElementSibling as HTMLInputElement;
+                              if (nameInput.value && urlInput?.value) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  other_links: {
+                                    ...prev.other_links,
+                                    [nameInput.value]: urlInput.value
+                                  }
+                                }));
+                                nameInput.value = '';
+                                urlInput.value = '';
+                              }
+                            }
+                          }}
+                        />
+                        <Input
+                          placeholder="https://..."
+                          className="flex-1"
+                          type="url"
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            const nameInput = document.querySelector('input[placeholder="Link name (e.g., Website, Portfolio)"]') as HTMLInputElement;
+                            const urlInput = document.querySelector('input[placeholder="https://..."]') as HTMLInputElement;
+                            if (nameInput?.value && urlInput?.value) {
+                              setFormData(prev => ({
+                                ...prev,
+                                other_links: {
+                                  ...prev.other_links,
+                                  [nameInput.value]: urlInput.value
+                                }
+                              }));
+                              nameInput.value = '';
+                              urlInput.value = '';
+                            }
+                          }}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                      
+                      {Object.entries(formData.other_links).map(([name, url]) => (
+                        <div key={name} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                          <span className="text-sm font-medium">{name}:</span>
+                          <span className="text-sm text-gray-600 flex-1">{url}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setFormData(prev => {
+                                const newLinks = { ...prev.other_links };
+                                delete newLinks[name];
+                                return { ...prev, other_links: newLinks };
+                              });
+                            }}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Navigation Buttons */}
               <div className="flex justify-between pt-6">
@@ -293,12 +453,13 @@ export default function NewProfile() {
                 </div>
 
                 <div className="flex space-x-3">
-                  {currentStep < 2 ? (
+                  {currentStep < 3 ? (
                     <Button 
                       type="button" 
                       onClick={nextStep}
                       disabled={
-                        (currentStep === 1 && (!formData.display_name || !formData.headline || !formData.location))
+                        (currentStep === 1 && (!formData.display_name || !formData.headline || !formData.location)) ||
+                        (currentStep === 2 && (!formData.skills || formData.available_for.length === 0))
                       }
                     >
                       Next Step
@@ -306,7 +467,7 @@ export default function NewProfile() {
                   ) : (
                     <Button 
                       type="submit" 
-                      disabled={loading || !formData.skills || formData.available_for.length === 0}
+                      disabled={loading}
                     >
                       {loading ? 'Creating Profile...' : 'Create Profile'}
                     </Button>

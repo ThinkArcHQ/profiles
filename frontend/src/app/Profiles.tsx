@@ -5,21 +5,10 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
-interface Profile {
-  id: string;
-  user_id: string;
-  name: string;
-  email: string;
-  skills: string[];
-  bio: string;
-  available_for: string[];
-  created_at: string;
-  updated_at: string;
-}
+import { PublicProfile } from '@/lib/types/profile';
 
 export default function Profiles() {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<PublicProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -29,9 +18,10 @@ export default function Profiles() {
 
   const fetchProfiles = async () => {
     try {
-      const response = await fetch('/api/profiles');
+      // Use search endpoint to get public profiles with slugs
+      const response = await fetch('/api/search');
       const data = await response.json();
-      setProfiles(data);
+      setProfiles(data.profiles || []);
     } catch (error) {
       console.error('Error fetching profiles:', error);
     } finally {
@@ -41,7 +31,7 @@ export default function Profiles() {
 
   const filteredProfiles = profiles.filter(profile =>
     profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (profile.bio && profile.bio.toLowerCase().includes(searchTerm.toLowerCase())) ||
     profile.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -179,11 +169,11 @@ export default function Profiles() {
                         )}
 
                         {/* Available For */}
-                        {profile.available_for.length > 0 && (
+                        {profile.availableFor.length > 0 && (
                           <div className="mb-6">
                             <h4 className="text-sm font-semibold text-orange-900 mb-2">Available For</h4>
                             <div className="flex flex-wrap gap-2">
-                              {profile.available_for.map((item, index) => (
+                              {profile.availableFor.map((item, index) => (
                                 <span
                                   key={index}
                                   className="px-3 py-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm rounded-full font-medium capitalize"
@@ -197,7 +187,7 @@ export default function Profiles() {
 
                         <div className="flex gap-3">
                           <Button asChild className="flex-1">
-                            <Link href={`/profile/${profile.id}`}>
+                            <Link href={`/profiles/${profile.slug}`}>
                               View Profile
                             </Link>
                           </Button>

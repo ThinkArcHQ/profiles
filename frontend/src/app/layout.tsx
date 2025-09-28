@@ -3,6 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthKitProvider } from '@workos-inc/authkit-nextjs/components';
 import { DashboardLayout } from '@/components/dashboard-layout';
+import { MCPServerInit } from '@/components/mcp-server-init';
+import { OnboardingWrapper } from '@/components/onboarding-wrapper';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { ToastProvider } from '@/components/ui/toast';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,11 +33,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthKitProvider>
-          <DashboardLayout>
-            {children}
-          </DashboardLayout>
-        </AuthKitProvider>
+        <MCPServerInit />
+        <ErrorBoundary>
+          <ToastProvider>
+            <AuthKitProvider>
+              <OnboardingWrapper>
+                <DashboardLayout>
+                  {children}
+                </DashboardLayout>
+              </OnboardingWrapper>
+            </AuthKitProvider>
+          </ToastProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

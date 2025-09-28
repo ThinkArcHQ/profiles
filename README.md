@@ -47,10 +47,8 @@ npm run install:backend
 Start both frontend and backend in development mode:
 
 ```bash
-# Terminal 1 - Start backend (runs on http://localhost:8000)
-npm run dev:backend
 
-# Terminal 2 - Start frontend (runs on http://localhost:3000)
+# Terminal - Start frontend (runs on http://localhost:3000)
 npm run dev:frontend
 ```
 

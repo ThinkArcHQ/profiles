@@ -6,20 +6,24 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Send, Search, Filter, User, Mail, Clock, MessageSquare, Quote, Eye } from 'lucide-react'
+import { Send, Search, Filter, User, Mail, Clock, MessageSquare, Quote, Eye, History, ArrowRight } from 'lucide-react'
+import { RequestHistory } from '@/components/request-history'
 
 interface SentRequest {
   id: string
-  recipient_name: string
-  recipient_email: string
+  recipientName: string
+  recipientEmail: string
   message: string
-  type: 'meeting' | 'quote'
-  preferred_time?: string
-  project_details?: string
-  budget_range?: string
-  status: 'pending' | 'accepted' | 'rejected'
-  created_at: string
-  updated_at?: string
+  requestType: 'meeting' | 'quote' | 'appointment'
+  preferredTime?: string
+  projectDetails?: string
+  budgetRange?: string
+  status: 'pending' | 'accepted' | 'rejected' | 'counter_proposed'
+  createdAt: string
+  updatedAt?: string
+  proposedTime?: string
+  counterMessage?: string
+  responseMessage?: string
 }
 
 export default function SentRequestsPage() {
@@ -29,6 +33,7 @@ export default function SentRequestsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [showHistory, setShowHistory] = useState<string | null>(null)
 
   useEffect(() => {
     fetchSentRequests()
@@ -43,7 +48,22 @@ export default function SentRequestsPage() {
       const response = await fetch('/api/appointments/sent')
       if (response.ok) {
         const data = await response.json()
-        setRequests(data)
+        // Transform the data to match our interface
+        const transformedRequests = data.map((req: any) => ({
+          id: req.id.toString(),
+          recipientName: req.profileName,
+          recipientEmail: req.profileEmail,
+          message: req.message,
+          requestType: req.requestType,
+          preferredTime: req.preferredTime,
+          status: req.status,
+          createdAt: req.createdAt,
+          updatedAt: req.updatedAt,
+          proposedTime: req.proposedTime,
+          counterMessage: req.counterMessage,
+          responseMessage: req.responseMessage,
+        }))
+        setRequests(transformedRequests)
       }
     } catch (error) {
       console.error('Error fetching sent requests:', error)
@@ -57,10 +77,9 @@ export default function SentRequestsPage() {
 
     if (searchTerm) {
       filtered = filtered.filter(request => 
-        request.recipient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.recipient_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (request.project_details && request.project_details.toLowerCase().includes(searchTerm.toLowerCase()))
+        request.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.recipientEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.message.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
@@ -69,7 +88,7 @@ export default function SentRequestsPage() {
     }
 
     if (typeFilter !== 'all') {
-      filtered = filtered.filter(request => request.type === typeFilter)
+      filtered = filtered.filter(request => request.requestType === typeFilter)
     }
 
     setFilteredRequests(filtered)
@@ -80,16 +99,27 @@ export default function SentRequestsPage() {
       case 'pending': return 'secondary'
       case 'accepted': return 'default'
       case 'rejected': return 'destructive'
+      case 'counter_proposed': return 'outline'
       default: return 'secondary'
     }
   }
 
   const getTypeIcon = (type: string) => {
-    return type === 'meeting' ? MessageSquare : Quote
+    switch (type) {
+      case 'meeting': return MessageSquare
+      case 'quote': return Quote
+      case 'appointment': return User
+      default: return MessageSquare
+    }
   }
 
   const getTypeColor = (type: string) => {
-    return type === 'meeting' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+    switch (type) {
+      case 'meeting': return 'bg-blue-100 text-blue-600'
+      case 'quote': return 'bg-green-100 text-green-600'
+      case 'appointment': return 'bg-purple-100 text-purple-600'
+      default: return 'bg-gray-100 text-gray-600'
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -219,6 +249,7 @@ export default function SentRequestsPage() {
                   <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="meeting">Meeting</SelectItem>
                   <SelectItem value="quote">Quote</SelectItem>
+                  <SelectItem value="appointment">Appointment</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -233,6 +264,7 @@ export default function SentRequestsPage() {
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="accepted">Accepted</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="counter_proposed">Counter Proposed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -261,31 +293,32 @@ export default function SentRequestsPage() {
       ) : (
         <div className="space-y-4">
           {filteredRequests.map((request) => {
-            const TypeIcon = getTypeIcon(request.type)
+            const TypeIcon = getTypeIcon(request.requestType)
             return (
               <Card key={request.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-start gap-4">
-                      <div className={`p-2 rounded-full ${getTypeColor(request.type)}`}>
+                      <div className={`p-2 rounded-full ${getTypeColor(request.requestType)}`}>
                         <TypeIcon className="h-5 w-5" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-lg">{request.recipient_name}</h3>
+                          <h3 className="font-semibold text-lg">{request.recipientName}</h3>
                           <Badge variant="outline" className="text-xs">
-                            {request.type.charAt(0).toUpperCase() + request.type.slice(1)}
+                            {request.requestType.charAt(0).toUpperCase() + request.requestType.slice(1)}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Mail className="h-4 w-4" />
-                          {request.recipient_email}
+                          {request.recipientEmail}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant={getStatusColor(request.status)}>
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                        {request.status.replace('_', ' ').charAt(0).toUpperCase() + 
+                         request.status.replace('_', ' ').slice(1)}
                       </Badge>
                     </div>
                   </div>
@@ -296,35 +329,38 @@ export default function SentRequestsPage() {
                       <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{request.message}</p>
                     </div>
 
-                    {request.type === 'meeting' && request.preferred_time && (
+                    {request.preferredTime && (
                       <div className="bg-blue-50 p-3 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
                           <Clock className="h-4 w-4 text-blue-600" />
-                          <span className="font-medium text-sm">Preferred Time</span>
+                          <span className="font-medium text-sm">Your Preferred Time</span>
                         </div>
-                        <p className="text-gray-700">{formatDate(request.preferred_time)}</p>
+                        <p className="text-gray-700">{formatDate(request.preferredTime)}</p>
                       </div>
                     )}
 
-                    {request.type === 'quote' && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {request.project_details && (
-                          <div className="bg-green-50 p-3 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Eye className="h-4 w-4 text-green-600" />
-                              <span className="font-medium text-sm">Project Details</span>
-                            </div>
-                            <p className="text-gray-700 text-sm">{request.project_details}</p>
-                          </div>
+                    {request.status === 'counter_proposed' && request.proposedTime && (
+                      <div className="bg-orange-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ArrowRight className="h-4 w-4 text-orange-600" />
+                          <span className="font-medium text-sm text-orange-700">They proposed:</span>
+                          <span className="text-sm text-orange-700 font-medium">
+                            {formatDate(request.proposedTime)}
+                          </span>
+                        </div>
+                        {request.counterMessage && (
+                          <p className="text-sm text-orange-700">{request.counterMessage}</p>
                         )}
-                        {request.budget_range && (
-                          <div className="bg-yellow-50 p-3 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-sm">Budget Range</span>
-                            </div>
-                            <p className="text-gray-700">{request.budget_range}</p>
-                          </div>
-                        )}
+                      </div>
+                    )}
+
+                    {request.responseMessage && (
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <MessageSquare className="h-4 w-4 text-gray-600" />
+                          <span className="font-medium text-sm">Their Response:</span>
+                        </div>
+                        <p className="text-gray-700 text-sm">{request.responseMessage}</p>
                       </div>
                     )}
                   </div>
@@ -333,14 +369,23 @@ export default function SentRequestsPage() {
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        Sent: {formatDate(request.created_at)}
+                        Sent: {formatDate(request.createdAt)}
                       </div>
-                      {request.updated_at && (
+                      {request.updatedAt && (
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          Updated: {formatDate(request.updated_at)}
+                          Updated: {formatDate(request.updatedAt)}
                         </div>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowHistory(showHistory === request.id ? null : request.id)}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <History className="h-4 w-4 mr-1" />
+                        {showHistory === request.id ? 'Hide' : 'Show'} History
+                      </Button>
                     </div>
 
                     {request.status === 'pending' && (
@@ -348,7 +393,26 @@ export default function SentRequestsPage() {
                         Awaiting response...
                       </div>
                     )}
+
+                    {request.status === 'counter_proposed' && (
+                      <div className="text-sm text-orange-600 font-medium">
+                        Counter-proposal received
+                      </div>
+                    )}
                   </div>
+
+                  {/* Request History */}
+                  {showHistory === request.id && (
+                    <div className="mt-6 pt-6 border-t">
+                      <RequestHistory 
+                        request={{
+                          ...request,
+                          requesterName: 'You',
+                          requesterEmail: 'your-email@example.com', // This would come from user context
+                        }} 
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )

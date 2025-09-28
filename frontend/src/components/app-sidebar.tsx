@@ -211,9 +211,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">
+                  <Link href="/settings">
                     <User className="mr-2 h-4 w-4" />
-                    Profile
+                    My Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

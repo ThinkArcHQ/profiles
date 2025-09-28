@@ -6,6 +6,7 @@ frontend/build/
 frontend/dist/
 frontend/.env*.local
 frontend/.vercel
+.kiro
 
 
 # IDEs

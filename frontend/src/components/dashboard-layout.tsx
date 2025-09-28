@@ -28,14 +28,27 @@ const getBreadcrumbs = (pathname: string) => {
   const segments = pathname.split('/').filter(Boolean);
   const breadcrumbs = [{ title: 'Home', href: '/dashboard' }];
   
-  // Skip the first segment if it's 'dashboard' to avoid duplicate
-  const relevantSegments = segments[0] === 'dashboard' ? segments.slice(1) : segments;
-  
-  relevantSegments.forEach((segment, index) => {
-    const href = '/dashboard' + (relevantSegments.length > 0 ? '/' + relevantSegments.slice(0, index + 1).join('/') : '');
-    const title = segment.charAt(0).toUpperCase() + segment.slice(1);
-    breadcrumbs.push({ title, href });
-  });
+  // Handle different route patterns
+  if (segments[0] === 'profiles' && segments[1]) {
+    // For /profiles/[slug] routes
+    breadcrumbs.push({ title: 'Profiles', href: '/profiles' });
+    breadcrumbs.push({ title: segments[1], href: pathname });
+  } else if (segments[0] === 'dashboard') {
+    // Skip the first segment if it's 'dashboard' to avoid duplicate
+    const relevantSegments = segments.slice(1);
+    relevantSegments.forEach((segment, index) => {
+      const href = '/dashboard' + (relevantSegments.length > 0 ? '/' + relevantSegments.slice(0, index + 1).join('/') : '');
+      const title = segment.charAt(0).toUpperCase() + segment.slice(1);
+      breadcrumbs.push({ title, href });
+    });
+  } else {
+    // Handle other routes
+    segments.forEach((segment, index) => {
+      const href = '/' + segments.slice(0, index + 1).join('/');
+      const title = segment.charAt(0).toUpperCase() + segment.slice(1);
+      breadcrumbs.push({ title, href });
+    });
+  }
 
   return breadcrumbs;
 };
@@ -50,7 +63,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   
   // Show sidebar for dashboard routes when user is authenticated or while loading
   const isDashboardRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/calendar') || 
-                          pathname.startsWith('/settings') || pathname.startsWith('/support');
+                          pathname.startsWith('/settings') || pathname.startsWith('/support') ||
+                          pathname.startsWith('/profiles') || pathname.startsWith('/meeting-requests') ||
+                          pathname.startsWith('/quote-requests') || pathname.startsWith('/sent-requests');
   const shouldShowSidebar = isDashboardRoute && !authPages.some(page => pathname.startsWith(page)) && !isExactHomePage;
 
   // Debug logging

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface Profile {
   id: string;
+  slug?: string;
   name: string;
   email: string;
   skills: string[];
@@ -20,6 +21,7 @@ interface Profile {
 
 export default function ProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,12 @@ export default function ProfilePage() {
       if (response.ok) {
         const data = await response.json();
         setProfile(data);
+        
+        // If profile has a slug, redirect to slug-based URL
+        if (data.slug) {
+          router.replace(`/profiles/${data.slug}`);
+          return;
+        }
       } else if (response.status === 404) {
         setError('Profile not found');
       } else {

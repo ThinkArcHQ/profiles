@@ -3,16 +3,27 @@ import { withAuth } from '@workos-inc/authkit-nextjs';
 import { db } from '@/lib/db/connection';
 import { profiles } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { ProfileTransformer, UpdateProfileInput } from '@/lib/types/profile';
 
-// GET /api/profiles/[id] - Get specific profile
+// GET /api/profiles/[id] - Get specific profile with privacy controls
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const profileId = parseInt(params.id);
+    const { id } = await params;
+    const profileId = parseInt(id);
     if (isNaN(profileId)) {
       return NextResponse.json({ error: 'Invalid profile ID' }, { status: 400 });
+    }
+
+    // Get current user for privacy checks
+    let currentUserId: string | undefined;
+    try {
+      const { user } = await withAuth();
+      currentUserId = user?.id;
+    } catch {
+      // Not authenticated - that's okay for public profiles
     }
 
     const [profile] = await db
@@ -24,7 +35,21 @@ export async function GET(
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
 
-    return NextResponse.json(profile);
+    // Check if viewer can see this profile
+    if (!ProfileTransformer.canViewProfile(profile, currentUserId)) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    }
+
+    // Return appropriate profile format based on viewer
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+    if (currentUserId === profile.workosUserId) {
+      // Owner sees full profile
+      return NextResponse.json(profile);
+    } else {
+      // Others see public profile only
+      const publicProfile = ProfileTransformer.toPublicProfile(profile, baseUrl);
+      return NextResponse.json(publicProfile);
+    }
   } catch (error) {
     console.error('Error fetching profile:', error);
     return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
@@ -34,7 +59,7 @@ export async function GET(
 // PUT /api/profiles/[id] - Update specific profile
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user } = await withAuth();
@@ -42,13 +67,22 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const profileId = parseInt(params.id);
+    const { id } = await params;
+    const profileId = parseInt(id);
     if (isNaN(profileId)) {
       return NextResponse.json({ error: 'Invalid profile ID' }, { status: 400 });
     }
 
-    const body = await request.json();
-    const { name, email, bio, skills, available_for } = body;
+    const body: UpdateProfileInput = await request.json();
+    
+    // Validate input data
+    const validationErrors = ProfileTransformer.validateProfileData(body);
+    if (validationErrors.length > 0) {
+      return NextResponse.json({ 
+        error: 'Validation failed', 
+        details: validationErrors 
+      }, { status: 400 });
+    }
 
     // Check if profile exists and belongs to user
     const [existingProfile] = await db
@@ -60,15 +94,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Profile not found or unauthorized' }, { status: 404 });
     }
 
-    // Update profile
+    // Update profile with validated data
     const [updatedProfile] = await db
       .update(profiles)
       .set({
-        name: name || existingProfile.name,
-        email: email || existingProfile.email,
-        bio: bio !== undefined ? bio : existingProfile.bio,
-        skills: skills || existingProfile.skills,
-        availableFor: available_for || existingProfile.availableFor,
+        name: body.name ?? existingProfile.name,
+        bio: body.bio !== undefined ? body.bio : existingProfile.bio,
+        skills: body.skills ?? existingProfile.skills,
+        availableFor: body.availableFor ?? existingProfile.availableFor,
+        isPublic: body.isPublic ?? existingProfile.isPublic,
+        linkedinUrl: body.linkedinUrl !== undefined ? body.linkedinUrl : existingProfile.linkedinUrl,
+        otherLinks: body.otherLinks ?? existingProfile.otherLinks,
         updatedAt: new Date(),
       })
       .where(eq(profiles.id, profileId))
@@ -84,7 +120,7 @@ export async function PUT(
 // DELETE /api/profiles/[id] - Soft delete profile
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user } = await withAuth();
@@ -92,7 +128,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const profileId = parseInt(params.id);
+    const { id } = await params;
+    const profileId = parseInt(id);
     if (isNaN(profileId)) {
       return NextResponse.json({ error: 'Invalid profile ID' }, { status: 400 });
     }

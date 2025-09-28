@@ -3,6 +3,7 @@ import { withAuth } from '@workos-inc/authkit-nextjs';
 import { db } from '@/lib/db/connection';
 import { appointments, profiles, type NewAppointment } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { NotificationService } from '@/lib/services/notification-service';
 
 // POST /api/appointments - Create appointment request
 export async function POST(request: NextRequest) {
@@ -60,6 +61,16 @@ export async function POST(request: NextRequest) {
       .insert(appointments)
       .values(newAppointment)
       .returning();
+
+    // Send notification to profile owner
+    await NotificationService.sendNotification({
+      type: 'new_request',
+      recipientEmail: profile.email,
+      recipientName: profile.name,
+      senderName: requester_name,
+      appointmentId: createdAppointment.id,
+      message: message,
+    });
 
     return NextResponse.json(createdAppointment, { status: 201 });
   } catch (error) {
