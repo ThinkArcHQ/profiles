@@ -4,6 +4,7 @@ import Profiles from './Profiles';
 import ClipboardButton from './ClipboardButton';
 import { Button } from '@/components/ui/button';
 import { FeaturesSectionWithHoverEffects } from '@/components/blocks/feature-section-with-hover-effects';
+import { FloatingPromptInput } from '@/components/floating-prompt-input';
 import { db } from '@/lib/db/connection';
 import { profiles } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -125,7 +126,7 @@ export default async function Home() {
               Connect with intelligent systems looking for your skills and expertise.
             </p>
 
-            <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-12">
               {user && userProfile ? (
                 <Button size="lg" asChild className="text-lg px-8 py-6 rounded-2xl">
                   <Link href="/dashboard" className="flex items-center">
@@ -157,6 +158,8 @@ export default async function Home() {
                 </Button>
               )}
             </div>
+
+
           </div>
         </div>
 
@@ -342,6 +345,9 @@ export default async function Home() {
           </div>
         </div>
       </footer>
+      
+      {/* Floating Prompt Input */}
+      <FloatingPromptInput />
     </div>
   );
 }

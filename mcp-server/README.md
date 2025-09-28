@@ -13,7 +13,7 @@ The server respects privacy controls and only exposes public profiles to AI agen
 
 ## Domain Configuration
 
-- **MCP Server**: `person.finderbee.ai`
+- **MCP Server**: `persons.finderbee.ai`
 - **Main Website**: `persons.finderbee.ai`
 
 ## Available Tools
