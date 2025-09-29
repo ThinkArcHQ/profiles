@@ -169,10 +169,10 @@ export const GET = withMCPMiddleware(
       
       const errorResponse: Partial<ServerStatusResponse> = {
         server: {
-          name: 'persons-finderbee-mcp',
+          name: 'profilebase-mcp',
           version: '1.0.0',
-          description: 'MCP server for Persons FinderBee',
-          domain: process.env.MCP_DOMAIN || 'https://person.finderbee.ai',
+          description: 'MCP server for ProfileBase',
+          domain: process.env.MCP_DOMAIN || 'https://profilebase.ai',
           status: 'offline',
           uptime: process.uptime(),
         },

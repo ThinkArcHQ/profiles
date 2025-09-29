@@ -1,5 +1,5 @@
 /**
- * Type definitions for the Persons FinderBee MCP Server
+ * Type definitions for the ProfileBase MCP Server
  */
 
 /**

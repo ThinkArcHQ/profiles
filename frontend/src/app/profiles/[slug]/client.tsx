@@ -79,7 +79,7 @@ export default function SlugProfileClient({ params }: SlugProfileClientProps) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <Link href="/" className="text-2xl font-bold text-orange-900">
-                Profiles
+                ProfileBase
               </Link>
               <div className="flex gap-2">
                 <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
@@ -152,7 +152,7 @@ export default function SlugProfileClient({ params }: SlugProfileClientProps) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <Link href="/" className="text-2xl font-bold text-orange-900">
-                Profiles
+                ProfileBase
               </Link>
               <Button variant="outline" asChild>
                 <Link href="/">Back to Home</Link>
@@ -227,7 +227,7 @@ export default function SlugProfileClient({ params }: SlugProfileClientProps) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <Link href="/" className="text-2xl font-bold text-orange-900">
-                Profiles
+                ProfileBase
               </Link>
               <Button variant="outline" asChild>
                 <Link href="/profiles">Browse Profiles</Link>

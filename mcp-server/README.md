@@ -1,6 +1,6 @@
-# Persons FinderBee MCP Server
+# ProfileBase MCP Server
 
-A Model Context Protocol (MCP) server that enables AI agents to discover and connect with people through the Persons FinderBee platform.
+A Model Context Protocol (MCP) server that enables AI agents to discover and connect with people through the ProfileBase platform.
 
 ## Overview
 
@@ -13,8 +13,8 @@ The server respects privacy controls and only exposes public profiles to AI agen
 
 ## Domain Configuration
 
-- **MCP Server**: `persons.finderbee.ai`
-- **Main Website**: `persons.finderbee.ai`
+- **MCP Server**: `profilebase.ai`
+- **Main Website**: `profilebase.ai`
 
 ## Available Tools
 
@@ -98,10 +98,10 @@ Set environment variables:
 
 ```bash
 # API base URL for the main website
-API_BASE_URL=https://persons.finderbee.ai/api
+API_BASE_URL=https://profilebase.ai/api
 
 # MCP server base URL
-MCP_BASE_URL=https://person.finderbee.ai
+MCP_BASE_URL=https://profilebase.ai
 
 # Rate limiting
 MAX_REQUESTS_PER_MINUTE=60

@@ -10,10 +10,10 @@
  */
 export const MCPDomainConfig = {
   // Main website domain
-  mainDomain: process.env.NEXT_PUBLIC_URL || 'https://persons.finderbee.ai',
-  
+  mainDomain: process.env.NEXT_PUBLIC_URL || 'https://profilebase.ai',
+
   // MCP server domain (for AI agent connections)
-  mcpDomain: process.env.MCP_DOMAIN || 'https://person.finderbee.ai',
+  mcpDomain: process.env.MCP_DOMAIN || 'https://profilebase.ai',
   
   // API base path for MCP endpoints
   apiBasePath: '/api/mcp',
@@ -27,9 +27,9 @@ export const MCPDomainConfig = {
  */
 export const MCPServerConfig = {
   // Server identification
-  name: 'persons-finderbee-mcp',
+  name: 'profilebase-mcp',
   version: '1.0.0',
-  description: 'MCP server for Persons FinderBee - Universal AI-accessible directory',
+  description: 'MCP server for ProfileBase - Universal AI-accessible directory',
   
   // Transport configuration
   transport: {
@@ -70,8 +70,8 @@ export const MCPServerConfig = {
   // Security configuration
   security: {
     enableCORS: true,
-    corsOrigins: process.env.NODE_ENV === 'production' 
-      ? ['https://persons.finderbee.ai', 'https://person.finderbee.ai']
+    corsOrigins: process.env.NODE_ENV === 'production'
+      ? ['https://profilebase.ai']
       : ['http://localhost:3000', 'http://127.0.0.1:3000'],
     enableRateLimiting: true,
     enableSecurityHeaders: true,
@@ -217,8 +217,7 @@ export const getEnvironmentConfig = () => {
       enableDetailedErrors: false,
       enableCORS: true,
       corsOrigins: [
-        'https://persons.finderbee.ai',
-        'https://person.finderbee.ai',
+        'https://profilebase.ai',
       ],
       rateLimitMultiplier: 1,
     },

@@ -14,7 +14,7 @@ export class MeetingService {
 
   constructor() {
     // In production, this would connect to the actual database or API
-    this.baseUrl = process.env.API_BASE_URL || "https://persons.finderbee.ai/api";
+    this.baseUrl = process.env.API_BASE_URL || "https://profilebase.ai/api";
     
     // Mock storage for testing
     this.mockMeetings = new Map();

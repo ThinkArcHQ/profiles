@@ -39,7 +39,7 @@ export function OnboardingFlow({ onComplete, onSkip, className = "" }: Onboardin
   const steps: OnboardingStep[] = [
     {
       id: 'welcome',
-      title: 'Welcome to Profiles!',
+      title: 'Welcome to ProfileBase!',
       description: 'Your gateway to AI agent discovery',
       icon: <Sparkles className="h-6 w-6 text-purple-600" />,
       content: (
@@ -50,7 +50,7 @@ export function OnboardingFlow({ onComplete, onSkip, className = "" }: Onboardin
             </div>
             <h3 className="text-xl font-semibold mb-2">Get Discovered by AI Agents Worldwide</h3>
             <p className="text-gray-600">
-              Profiles is a universal platform where AI agents can discover and connect with you through 
+              ProfileBase is a universal platform where AI agents can discover and connect with you through
               the Model Context Protocol (MCP). Let&apos;s set up your profile for maximum visibility and control.
             </p>
           </div>
@@ -167,7 +167,7 @@ export function OnboardingFlow({ onComplete, onSkip, className = "" }: Onboardin
                 We&apos;ll automatically create a unique slug based on your name, like:
               </p>
               <div className="bg-white p-3 rounded border font-mono text-sm">
-                profiles.finderbee.ai/profiles/<span className="text-blue-600">john-doe</span>
+                profilebase.ai/profiles/<span className="text-blue-600">john-doe</span>
               </div>
             </div>
             
@@ -370,7 +370,7 @@ export function useOnboarding() {
 
   useEffect(() => {
     // Check if user has seen onboarding
-    const seen = localStorage.getItem('profiles-onboarding-seen');
+    const seen = localStorage.getItem('profilebase-onboarding-seen');
     if (!seen) {
       setShowOnboarding(true);
     } else {
@@ -379,19 +379,19 @@ export function useOnboarding() {
   }, []);
 
   const completeOnboarding = () => {
-    localStorage.setItem('profiles-onboarding-seen', 'true');
+    localStorage.setItem('profilebase-onboarding-seen', 'true');
     setShowOnboarding(false);
     setHasSeenOnboarding(true);
   };
 
   const skipOnboarding = () => {
-    localStorage.setItem('profiles-onboarding-seen', 'true');
+    localStorage.setItem('profilebase-onboarding-seen', 'true');
     setShowOnboarding(false);
     setHasSeenOnboarding(true);
   };
 
   const resetOnboarding = () => {
-    localStorage.removeItem('profiles-onboarding-seen');
+    localStorage.removeItem('profilebase-onboarding-seen');
     setShowOnboarding(true);
     setHasSeenOnboarding(false);
   };

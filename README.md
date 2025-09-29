@@ -1,4 +1,4 @@
-# Profiles
+# ProfileBase
 Reimagining Connections in the Era of AI
 
 A minimal platform where AI agents can discover and connect with professionals for appointments, quotes, and meetings.
@@ -28,8 +28,8 @@ A minimal platform where AI agents can discover and connect with professionals f
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/ThinkArcHQ/profiles.git
-cd profiles
+git clone https://github.com/ThinkArcHQ/profilebase.git
+cd profilebase
 ```
 
 2. Install frontend dependencies:

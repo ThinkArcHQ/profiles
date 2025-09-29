@@ -116,7 +116,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <User className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Profiles</span>
+                  <span className="truncate font-semibold">ProfileBase</span>
                   <span className="truncate text-xs">AI Agent Network</span>
                 </div>
               </Link>

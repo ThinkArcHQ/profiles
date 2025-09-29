@@ -58,7 +58,7 @@ const originalEnv = process.env;
 beforeEach(() => {
   process.env = {
     ...originalEnv,
-    NEXT_PUBLIC_URL: 'https://persons.finderbee.ai',
+    NEXT_PUBLIC_URL: 'https://profilebase.ai',
     NODE_ENV: 'test',
   };
 });
@@ -131,7 +131,7 @@ describe('MCP Tools', () => {
         bio: 'Software engineer with expertise in AI and web development',
         skills: ['JavaScript', 'TypeScript', 'React', 'AI'],
         availableFor: ['meetings', 'quotes'],
-        profileUrl: 'https://persons.finderbee.ai/profiles/john-doe',
+        profileUrl: 'https://profilebase.ai/profiles/john-doe',
       });
       expect(data.profiles[0]).not.toHaveProperty('email');
       expect(data.profiles[0]).not.toHaveProperty('workosUserId');
@@ -363,7 +363,7 @@ describe('MCP Tools', () => {
         bio: 'Software engineer with expertise in AI and web development',
         skills: ['JavaScript', 'TypeScript', 'React', 'AI'],
         availableFor: ['meetings', 'quotes'],
-        profileUrl: 'https://persons.finderbee.ai/profiles/john-doe',
+        profileUrl: 'https://profilebase.ai/profiles/john-doe',
         linkedinUrl: 'https://linkedin.com/in/johndoe',
         otherLinks: { github: 'https://github.com/johndoe' },
       });

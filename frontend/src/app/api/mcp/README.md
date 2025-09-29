@@ -1,6 +1,6 @@
 # MCP Server Infrastructure
 
-This directory contains the Model Context Protocol (MCP) server infrastructure for the Persons FinderBee platform. The MCP server enables AI agents to discover and connect with people through standardized endpoints.
+This directory contains the Model Context Protocol (MCP) server infrastructure for the ProfileBase platform. The MCP server enables AI agents to discover and connect with people through standardized endpoints.
 
 ## Overview
 
@@ -72,7 +72,7 @@ Search for people profiles by various criteria.
       "bio": "Software engineer with 5 years experience",
       "skills": ["JavaScript", "React", "Node.js"],
       "availableFor": ["meetings", "quotes"],
-      "profileUrl": "https://persons.finderbee.ai/profiles/john-doe",
+      "profileUrl": "https://profilebase.ai/profiles/john-doe",
       "linkedinUrl": "https://linkedin.com/in/johndoe",
       "otherLinks": {}
     }
@@ -106,7 +106,7 @@ Get detailed information about a specific person.
     "bio": "Software engineer with 5 years experience",
     "skills": ["JavaScript", "React", "Node.js"],
     "availableFor": ["meetings", "quotes"],
-    "profileUrl": "https://persons.finderbee.ai/profiles/john-doe",
+    "profileUrl": "https://profilebase.ai/profiles/john-doe",
     "linkedinUrl": "https://linkedin.com/in/johndoe",
     "otherLinks": {}
   }
@@ -175,10 +175,10 @@ Server status and capabilities.
 ```json
 {
   "server": {
-    "name": "persons-finderbee-mcp",
+    "name": "profilebase-mcp",
     "version": "1.0.0",
-    "description": "MCP server for Persons FinderBee",
-    "domain": "https://person.finderbee.ai",
+    "description": "MCP server for ProfileBase",
+    "domain": "https://profilebase.ai",
     "status": "online",
     "uptime": 3600
   },
@@ -250,8 +250,8 @@ Server status and capabilities.
 DATABASE_URL=postgresql://...
 
 # Domains
-NEXT_PUBLIC_URL=https://persons.finderbee.ai
-MCP_DOMAIN=https://person.finderbee.ai
+NEXT_PUBLIC_URL=https://profilebase.ai
+MCP_DOMAIN=https://profilebase.ai
 
 # Server
 MCP_PORT=3000
@@ -306,17 +306,17 @@ export const MCPRateLimitConfigs = {
 ### Manual Testing
 ```bash
 # Search profiles
-curl -X POST https://person.finderbee.ai/api/mcp/search \
+curl -X POST https://profilebase.ai/api/mcp/search \
   -H "Content-Type: application/json" \
   -d '{"query": "engineer", "limit": 5}'
 
 # Get profile
-curl -X POST https://person.finderbee.ai/api/mcp/get-profile \
+curl -X POST https://profilebase.ai/api/mcp/get-profile \
   -H "Content-Type: application/json" \
   -d '{"profileSlug": "john-doe"}'
 
 # Health check
-curl https://person.finderbee.ai/api/mcp/health
+curl https://profilebase.ai/api/mcp/health
 ```
 
 ### Integration Tests
@@ -327,8 +327,8 @@ Tests are located in `__tests__/` directories:
 ## Deployment
 
 ### Domain Configuration
-- **Main Website**: `persons.finderbee.ai`
-- **MCP Server**: `person.finderbee.ai`
+- **Main Website**: `profilebase.ai`
+- **MCP Server**: `profilebase.ai`
 
 ### Infrastructure Requirements
 - Node.js 18+ runtime
@@ -358,7 +358,7 @@ const client = new Client({
 // Connect to MCP server
 await client.connect({
   type: "http",
-  baseUrl: "https://person.finderbee.ai"
+  baseUrl: "https://profilebase.ai"
 });
 
 // Use tools

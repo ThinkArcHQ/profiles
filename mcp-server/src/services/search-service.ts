@@ -14,7 +14,7 @@ export class SearchService {
 
   constructor() {
     // In production, this would connect to the actual database or API
-    this.baseUrl = process.env.API_BASE_URL || "https://persons.finderbee.ai/api";
+    this.baseUrl = process.env.API_BASE_URL || "https://profilebase.ai/api";
     
     // Mock data for testing and development
     this.mockProfiles = [
@@ -24,7 +24,7 @@ export class SearchService {
         bio: "Senior AI Engineer with 8+ years experience in machine learning and LLMs",
         skills: ["Python", "TensorFlow", "PyTorch", "Machine Learning", "AI", "LLMs"],
         availableFor: ["consulting", "mentoring", "speaking"],
-        profileUrl: "https://persons.finderbee.ai/profiles/john-doe-ai-engineer",
+        profileUrl: "https://profilebase.ai/profiles/john-doe-ai-engineer",
         linkedinUrl: "https://linkedin.com/in/johndoe",
         otherLinks: { "github": "https://github.com/johndoe", "website": "https://johndoe.dev" }
       },
@@ -34,7 +34,7 @@ export class SearchService {
         bio: "Product Manager specializing in AI products and user experience",
         skills: ["Product Management", "AI Strategy", "User Research", "Agile", "Data Analysis"],
         availableFor: ["consulting", "advising"],
-        profileUrl: "https://persons.finderbee.ai/profiles/sarah-smith-product-manager",
+        profileUrl: "https://profilebase.ai/profiles/sarah-smith-product-manager",
         linkedinUrl: "https://linkedin.com/in/sarahsmith",
         otherLinks: { "medium": "https://medium.com/@sarahsmith" }
       },
@@ -44,7 +44,7 @@ export class SearchService {
         bio: "Serial entrepreneur and startup founder with expertise in AI and fintech",
         skills: ["Entrepreneurship", "AI", "Fintech", "Leadership", "Fundraising", "Strategy"],
         availableFor: ["mentoring", "advising", "investing"],
-        profileUrl: "https://persons.finderbee.ai/profiles/mike-johnson-startup-founder",
+        profileUrl: "https://profilebase.ai/profiles/mike-johnson-startup-founder",
         linkedinUrl: "https://linkedin.com/in/mikejohnson",
         otherLinks: { "twitter": "https://twitter.com/mikejohnson", "company": "https://aifintech.co" }
       }
@@ -200,7 +200,7 @@ export class SearchService {
       skills: Array.isArray(profileData.skills) ? profileData.skills : [],
       availableFor: Array.isArray(profileData.availableFor) ? profileData.availableFor : 
                    Array.isArray(profileData.available_for) ? profileData.available_for : [],
-      profileUrl: profileData.profileUrl || `https://persons.finderbee.ai/profiles/${profileData.slug}`,
+      profileUrl: profileData.profileUrl || `https://profilebase.ai/profiles/${profileData.slug}`,
       linkedinUrl: profileData.linkedinUrl || profileData.linkedin_url,
       otherLinks: profileData.otherLinks || profileData.other_links || {}
       // Note: email is intentionally excluded for privacy

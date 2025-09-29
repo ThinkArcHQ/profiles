@@ -1,5 +1,5 @@
 {
-  "name": "profiles",
+  "name": "profilebase",
   "version": "1.0.0",
   "description": "Reimagining Connections in the Era of AI",
   "scripts": {
@@ -11,7 +11,7 @@
   "keywords": [
     "ai",
     "agents",
-    "profiles",
+    "profilebase",
     "connections",
     "nextjs",
     "fastapi",

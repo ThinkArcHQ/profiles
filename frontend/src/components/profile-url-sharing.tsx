@@ -99,7 +99,7 @@ export function ProfileUrlSharing({
 
   const handleShare = async (platform: string) => {
     const encodedUrl = encodeURIComponent(fullUrl);
-    const text = encodeURIComponent(`Check out my profile on Profiles`);
+    const text = encodeURIComponent(`Check out my profile on ProfileBase`);
     
     let shareUrl = '';
     
@@ -111,7 +111,7 @@ export function ProfileUrlSharing({
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
         break;
       case 'email':
-        shareUrl = `mailto:?subject=${encodeURIComponent('My Profile on Profiles')}&body=${text}%0A%0A${encodedUrl}`;
+        shareUrl = `mailto:?subject=${encodeURIComponent('My Profile on ProfileBase')}&body=${text}%0A%0A${encodedUrl}`;
         break;
       default:
         return;

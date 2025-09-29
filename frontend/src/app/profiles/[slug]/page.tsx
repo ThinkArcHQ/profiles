@@ -16,10 +16,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     if (response.ok) {
       const profile: PublicProfile = await response.json();
       
-      const title = `${profile.name} - Profiles`;
-      const description = profile.bio 
+      const title = `${profile.name} - ProfileBase`;
+      const description = profile.bio
         ? `${profile.bio.substring(0, 160)}${profile.bio.length > 160 ? '...' : ''}`
-        : `Connect with ${profile.name} on Profiles. Available for ${profile.availableFor.join(', ')}.`;
+        : `Connect with ${profile.name} on ProfileBase. Available for ${profile.availableFor.join(', ')}.`;
       
       const keywords = [
         profile.name,
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
           title,
           description,
           url: profile.profileUrl,
-          siteName: 'Profiles',
+          siteName: 'ProfileBase',
           type: 'profile',
           images: [
             {
@@ -79,8 +79,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   // Fallback metadata
   return {
-    title: `Profile - Profiles`,
-    description: 'View profile on Profiles - Connect with professionals worldwide.',
+    title: `Profile - ProfileBase`,
+    description: 'View profile on ProfileBase - Connect with professionals worldwide.',
     robots: {
       index: false,
       follow: false,

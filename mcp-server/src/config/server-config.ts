@@ -1,5 +1,5 @@
 /**
- * Configuration for the Persons FinderBee MCP Server
+ * Configuration for the ProfileBase MCP Server
  */
 
 import { ServerConfig } from "../types/index.js";
@@ -8,8 +8,8 @@ import { ServerConfig } from "../types/index.js";
  * Default server configuration
  */
 export const defaultConfig: ServerConfig = {
-  baseUrl: "https://person.finderbee.ai",
-  apiUrl: process.env.API_BASE_URL || "https://persons.finderbee.ai/api",
+  baseUrl: "https://profilebase.ai",
+  apiUrl: process.env.API_BASE_URL || "https://profilebase.ai/api",
   maxRequestsPerMinute: 60,
   enableLogging: process.env.NODE_ENV !== "production"
 };

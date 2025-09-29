@@ -35,7 +35,7 @@ export default async function Home() {
           <div className="flex justify-between items-center h-20 pt-6">
             {/* Name/Logo in Top Left */}
             <div className="text-white text-2xl font-bold">
-              Profiles
+              ProfileBase
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
@@ -263,9 +263,9 @@ export default async function Home() {
             <p className="text-gray-800 mb-6 text-xl font-semibold">MCP Endpoint:</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8">
               <code className="bg-gray-100 text-gray-800 px-6 py-4 rounded-2xl text-lg font-mono border border-gray-200 min-w-0">
-                https://profiles.finderbee.ai/mcp
+                https://profilebase.ai/mcp
               </code>
-              <ClipboardButton textToCopy="https://profiles.finderbee.ai/mcp" />
+              <ClipboardButton textToCopy="https://profilebase.ai/mcp" />
             </div>
             <p className="text-gray-600 text-lg leading-relaxed">
               Integrate with our profile database to discover and connect with talented individuals for your AI agents.
@@ -283,7 +283,7 @@ export default async function Home() {
               <div className="flex items-center space-x-4 mb-6">
 
                 <div>
-                  <h3 className="text-2xl font-bold text-white">Profiles by FinderBee.ai</h3>
+                  <h3 className="text-2xl font-bold text-white">ProfileBase</h3>
                   <p className="text-orange-400">by ThinkArc, Inc.</p>
                 </div>
               </div>

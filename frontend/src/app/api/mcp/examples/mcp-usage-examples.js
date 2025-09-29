@@ -5,7 +5,7 @@
  * to search for profiles and request meetings.
  */
 
-const BASE_URL = 'https://persons.finderbee.ai/api/mcp';
+const BASE_URL = 'https://profilebase.ai/api/mcp';
 
 /**
  * Example 1: Search for profiles by skills

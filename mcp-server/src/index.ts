@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * Persons FinderBee MCP Server
- * 
+ * ProfileBase MCP Server
+ *
  * This MCP server enables AI agents to discover and connect with people
- * through the Persons FinderBee platform. It provides tools for searching
+ * through the ProfileBase platform. It provides tools for searching
  * profiles, requesting meetings, and getting detailed profile information.
- * 
- * Domain: person.finderbee.ai
- * Main Website: persons.finderbee.ai
+ *
+ * Domain: profilebase.ai
+ * Main Website: profilebase.ai
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -25,9 +25,9 @@ import { validateSearchInput, validateMeetingInput, validateProfileInput } from 
 import { MCPError, handleError } from "./utils/error-handling.js";
 
 /**
- * Main MCP Server class for Persons FinderBee
+ * Main MCP Server class for ProfileBase
  */
-class PersonsFinderBeeServer {
+class ProfileBaseServer {
   private server: Server;
   private profileService: ProfileService;
   private meetingService: MeetingService;
@@ -36,7 +36,7 @@ class PersonsFinderBeeServer {
   constructor() {
     this.server = new Server(
       {
-        name: "persons-finderbee",
+        name: "profilebase",
         version: "0.1.0",
       },
       {
@@ -276,17 +276,17 @@ class PersonsFinderBeeServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error("Persons FinderBee MCP Server running on person.finderbee.ai");
+    console.error("ProfileBase MCP Server running on profilebase.ai");
   }
 }
 
 // Start the server if this file is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new PersonsFinderBeeServer();
+  const server = new ProfileBaseServer();
   server.run().catch((error) => {
     console.error("Failed to start MCP server:", error);
     process.exit(1);
   });
 }
 
-export { PersonsFinderBeeServer };
+export { ProfileBaseServer };

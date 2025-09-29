@@ -3,13 +3,13 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { PersonsFinderBeeServer } from "../index.js";
+import { ProfileBaseServer } from "../index.js";
 import { validateSearchInput, validateMeetingInput, validateProfileInput } from "../utils/validation.js";
 import { MCPError } from "../utils/error-handling.js";
 
-describe("PersonsFinderBeeServer", () => {
+describe("ProfileBaseServer", () => {
   it("should create server instance", () => {
-    const server = new PersonsFinderBeeServer();
+    const server = new ProfileBaseServer();
     expect(server).toBeDefined();
   });
 });

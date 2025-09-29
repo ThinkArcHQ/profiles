@@ -386,7 +386,7 @@ describe('GET /api/profiles/slug/[slug]', () => {
     it('should include profileUrl with correct base URL from environment', async () => {
       // Mock environment variable
       const originalEnv = process.env.NEXT_PUBLIC_URL;
-      process.env.NEXT_PUBLIC_URL = 'https://persons.finderbee.ai';
+      process.env.NEXT_PUBLIC_URL = 'https://profilebase.ai';
 
       mockDb.select.mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -401,7 +401,7 @@ describe('GET /api/profiles/slug/[slug]', () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.profileUrl).toBe('https://persons.finderbee.ai/profiles/john-doe');
+      expect(data.profileUrl).toBe('https://profilebase.ai/profiles/john-doe');
 
       // Restore environment
       process.env.NEXT_PUBLIC_URL = originalEnv;
