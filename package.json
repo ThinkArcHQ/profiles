@@ -17,6 +17,6 @@
     "fastapi",
     "mcp"
   ],
-  "author": "ThinkArcHQ",
+  "author": "ProfileBase",
   "license": "MIT"
 }

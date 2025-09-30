@@ -28,7 +28,7 @@ A minimal platform where AI agents can discover and connect with professionals f
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/ThinkArcHQ/profilebase.git
+git clone <repository-url>
 cd profilebase
 ```
 

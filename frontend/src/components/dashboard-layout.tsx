@@ -3,6 +3,8 @@
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@workos-inc/authkit-nextjs/components';
+import Link from 'next/link';
+import { User } from 'lucide-react';
 
 import { AppSidebar } from '@/components/app-sidebar';
 import {
@@ -19,6 +21,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,8 +29,8 @@ interface DashboardLayoutProps {
 
 const getBreadcrumbs = (pathname: string) => {
   const segments = pathname.split('/').filter(Boolean);
-  const breadcrumbs = [{ title: 'Home', href: '/profiles' }];
-  
+  const breadcrumbs: { title: string; href: string }[] = [];
+
   // Handle different route patterns
   if (segments[0] === 'profiles' && segments[1]) {
     // For /profiles/[slug] routes
@@ -55,20 +58,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   
   // Exclude profiles pages from dashboard layout (they have their own full-screen layout)
   const isProfilesPage = pathname.startsWith('/profiles');
-  
+
   // Check if this is a root-level profile page (individual profile slug)
   // Root-level profile pages are paths that don't start with known dashboard routes
-  const knownRoutes = ['/calendar', '/settings', '/support', '/meeting-requests', 
-                      '/sent-requests', '/home', '/profile', '/api'];
-  const isRootLevelProfilePage = !knownRoutes.some(route => pathname.startsWith(route)) && 
-                                pathname !== '/' && 
+  const knownRoutes = ['/calendar', '/settings', '/requests',
+                      '/home', '/profile', '/api'];
+  const isRootLevelProfilePage = !knownRoutes.some(route => pathname.startsWith(route)) &&
+                                pathname !== '/' &&
                                 !authPages.some(page => pathname.startsWith(page));
-  
+
   // Show sidebar for dashboard routes when user is authenticated or while loading
-  const isDashboardRoute = pathname.startsWith('/calendar') || 
-                          pathname.startsWith('/settings') || pathname.startsWith('/support') ||
-                          pathname.startsWith('/meeting-requests') ||
-                          pathname.startsWith('/sent-requests');
+  const isDashboardRoute = pathname.startsWith('/calendar') ||
+                          pathname.startsWith('/settings') ||
+                          pathname.startsWith('/requests');
   const shouldShowSidebar = isDashboardRoute && !authPages.some(page => pathname.startsWith(page)) && !isExactHomePage && !isProfilesPage && !isRootLevelProfilePage;
 
   // Debug logging
@@ -80,36 +82,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (shouldShowSidebar) {
     const breadcrumbs = getBreadcrumbs(pathname);
+    const getUserInitials = (name: string) => {
+      return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    };
 
     return (
       <SidebarProvider defaultOpen={false}>
         <AppSidebar className="border-r" />
-        <SidebarInset className="min-h-screen flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {breadcrumbs.map((breadcrumb, index) => (
-                    <React.Fragment key={`${breadcrumb.href}-${index}`}>
-                      {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
-                      <BreadcrumbItem className="hidden md:block">
-                        {index === breadcrumbs.length - 1 ? (
-                          <BreadcrumbPage>{breadcrumb.title}</BreadcrumbPage>
-                        ) : (
-                          <BreadcrumbLink href={breadcrumb.href}>
-                            {breadcrumb.title}
-                          </BreadcrumbLink>
-                        )}
-                      </BreadcrumbItem>
-                    </React.Fragment>
-                  ))}
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-          </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <SidebarInset className="min-h-screen flex-1 ml-16">
+          <div className="flex flex-1 flex-col gap-4 p-4">
             {children}
           </div>
         </SidebarInset>

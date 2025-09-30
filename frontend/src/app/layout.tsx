@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ProfileBase | Be Discovered by AI Agents Worldwide via MCP",
-  description: "Register your profile to be discoverable by AI agents globally through MCP (Model Context Protocol). Connect with intelligent systems worldwide at https://profilebase.ai/mcp by ThinkArc, Inc.",
+  description: "Register your profile to be discoverable by AI agents globally through MCP (Model Context Protocol). Connect with intelligent systems worldwide at https://profilebase.ai/mcp",
 };
 
 export default function RootLayout({

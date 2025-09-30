@@ -11,13 +11,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { 
-  User, 
-  Bell, 
-  Shield, 
+import {
+  User,
+  Bell,
+  Shield,
   Settings as SettingsIcon,
   Save,
   Trash2,
@@ -25,14 +24,12 @@ import {
   Mail,
   Globe,
   Link,
-  Lock,
-  Sparkles
+  Lock
 } from 'lucide-react';
 import { PrivacySettingsComponent } from '@/components/privacy-settings';
 import { SlugEditor } from '@/components/slug-editor';
 import { ProfileUrlSharing } from '@/components/profile-url-sharing';
 import { PrivacyStatusIndicator, getPrivacyStatusFromProfile } from '@/components/privacy-status-indicator';
-import { useOnboarding } from '@/components/onboarding-flow';
 
 interface Profile {
   id: string;
@@ -53,10 +50,10 @@ interface Profile {
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const { resetOnboarding } = useOnboarding();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeSection, setActiveSection] = useState('profile');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -73,6 +70,12 @@ export default function SettingsPage() {
     weeklyDigest: true,
   });
 
+  const navigationItems = [
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'privacy', label: 'Privacy', icon: Shield },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'account', label: 'Account', icon: SettingsIcon },
+  ];
 
   useEffect(() => {
     if (!authLoading) {
@@ -251,7 +254,7 @@ export default function SettingsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-orange-600 text-lg">Loading settings...</p>
@@ -261,53 +264,63 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600 mt-1">
-            Manage your account preferences and privacy settings
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 flex-shrink-0">
-            <AvatarFallback className="bg-orange-600 text-white">
-              {user?.firstName ? getUserInitials(user.firstName + ' ' + (user.lastName || '')) : 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="font-medium truncate">{user?.firstName} {user?.lastName}</p>
-            <p className="text-sm text-gray-600 truncate">{user?.email}</p>
+    <div className="fixed inset-0 flex bg-white ml-16">
+      {/* Left Sidebar Navigation */}
+      <div className="w-64 flex-shrink-0 border-r border-gray-200 overflow-y-auto">
+        <div className="p-6 space-y-6">
+          {/* Header */}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Manage your account
+            </p>
           </div>
+
+          {/* User Info */}
+          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+            <Avatar className="h-10 w-10 flex-shrink-0">
+              <AvatarFallback className="bg-orange-600 text-white">
+                {user?.firstName ? getUserInitials(user.firstName + ' ' + (user.lastName || '')) : 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-sm truncate">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-gray-600 truncate">{user?.email}</p>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="space-y-1">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={`
+                    w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors
+                    ${isActive
+                      ? 'bg-orange-50 text-orange-600 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                    }
+                  `}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
         </div>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Profile</span>
-          </TabsTrigger>
-          <TabsTrigger value="url" className="flex items-center gap-2">
-            <Link className="h-4 w-4" />
-            <span className="hidden sm:inline">URL</span>
-          </TabsTrigger>
-          <TabsTrigger value="privacy" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">Privacy</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="account" className="flex items-center gap-2">
-            <SettingsIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Account</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Right Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6 space-y-6 max-w-4xl">
 
-        <TabsContent value="profile" className="space-y-6">
+        {activeSection === 'profile' && (
+          <div className="space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -415,9 +428,7 @@ export default function SettingsPage() {
                     <Label>Available For</Label>
                     <div className="space-y-3">
                       {[
-                        { id: 'appointments', label: 'Appointments', description: 'One-on-one meetings and consultations' },
-                        { id: 'quotes', label: 'Quotes', description: 'Project estimates and proposals' },
-                        { id: 'meetings', label: 'Meetings', description: 'Group discussions and collaborations' },
+                        { id: 'meetings', label: 'Meetings', description: 'One-on-one or group discussions and collaborations' },
                       ].map((option) => (
                         <div key={option.id} className="flex items-center space-x-3">
                           <Checkbox
@@ -522,10 +533,8 @@ export default function SettingsPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="url" className="space-y-6">
-          {profile ? (
+          {profile && (
             <div className="space-y-6">
               <SlugEditor
                 currentSlug={profile.slug}
@@ -533,7 +542,7 @@ export default function SettingsPage() {
                 isLoading={loading}
                 baseUrl={window.location.origin}
               />
-              
+
               <ProfileUrlSharing
                 slug={profile.slug}
                 isPublic={profile.isPublic}
@@ -541,19 +550,12 @@ export default function SettingsPage() {
                 profileId={parseInt(profile.id)}
               />
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <Link className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No profile yet</h3>
-              <p className="text-gray-600 mb-4">Create your profile to get a unique URL</p>
-              <Button onClick={() => router.push('/profile/new')}>
-                Create Profile
-              </Button>
-            </div>
           )}
-        </TabsContent>
+          </div>
+        )}
 
-        <TabsContent value="notifications" className="space-y-6">
+        {activeSection === 'notifications' && (
+          <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -561,7 +563,7 @@ export default function SettingsPage() {
                 Notification Preferences
               </CardTitle>
               <CardDescription>
-                Choose how you want to be notified about appointments and updates
+                Choose how you want to be notified about meetings and updates
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -575,8 +577,8 @@ export default function SettingsPage() {
                   },
                   {
                     key: 'appointmentReminders',
-                    label: 'Appointment Reminders',
-                    description: 'Get reminded about upcoming appointments',
+                    label: 'Meeting Reminders',
+                    description: 'Get reminded about upcoming meetings',
                     icon: <Bell className="h-4 w-4" />
                   },
                   {
@@ -611,9 +613,11 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+          </div>
+        )}
 
-        <TabsContent value="privacy" className="space-y-6">
+        {activeSection === 'privacy' && (
+          <div className="space-y-6">
           {profile ? (
             <PrivacySettingsComponent
               currentSettings={{
@@ -634,9 +638,11 @@ export default function SettingsPage() {
               </Button>
             </div>
           )}
-        </TabsContent>
+          </div>
+        )}
 
-        <TabsContent value="account" className="space-y-6">
+        {activeSection === 'account' && (
+          <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -669,19 +675,6 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <Badge variant="outline">Free</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <Sparkles className="h-5 w-5 text-purple-400" />
-                    <div>
-                      <Label className="font-medium">Onboarding Tour</Label>
-                      <p className="text-sm text-gray-600">Replay the welcome tour</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={resetOnboarding}>
-                    Restart Tour
-                  </Button>
                 </div>
               </div>
 
@@ -718,8 +711,10 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+          </div>
+        )}
+        </div>
+      </div>
     </div>
   );
 }

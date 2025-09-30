@@ -62,7 +62,7 @@ export default async function Home() {
                   </Button>
                   {userProfile ? (
                     <Button asChild className="bg-orange-600 hover:bg-orange-700">
-                      <Link href="/meeting-requests">
+                      <Link href="/requests">
                         Requests
                       </Link>
                     </Button>
@@ -296,7 +296,6 @@ export default async function Home() {
                     <span className="text-black">Profile</span>
                     <span className="text-orange-600">Base</span>
                   </h3>
-                  <p className="text-orange-600">by ThinkArc, Inc.</p>
                 </div>
               </div>
               <p className="text-gray-600 mb-6 leading-relaxed max-w-md">
@@ -312,14 +311,13 @@ export default async function Home() {
                 <li><Link href="/home" className="text-gray-600 hover:text-orange-600 transition-colors">Home</Link></li>
                 <li><Link href="/profile/new" className="text-gray-600 hover:text-orange-600 transition-colors">Create Profile</Link></li>
                 <li><Link href="/login" className="text-gray-600 hover:text-orange-600 transition-colors">Sign In</Link></li>
-                <li><Link href="/meeting-requests" className="text-gray-600 hover:text-orange-600 transition-colors">Requests</Link></li>
+                <li><Link href="/requests" className="text-gray-600 hover:text-orange-600 transition-colors">Requests</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold text-gray-900 mb-4">Support</h4>
               <ul className="space-y-2">
-                <li><Link href="/support" className="text-gray-600 hover:text-orange-600 transition-colors">Help Center</Link></li>
                 <li><a href="#" className="text-gray-600 hover:text-orange-600 transition-colors">Privacy Policy</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-orange-600 transition-colors">Terms of Service</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-orange-600 transition-colors">Contact Us</a></li>
@@ -331,7 +329,7 @@ export default async function Home() {
 
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm">
-              © 2025 ThinkArc, Inc. All rights reserved.
+              © 2025 ProfileBase. All rights reserved.
             </p>
             <p className="text-gray-400 text-sm mt-4 md:mt-0">
               Connecting people with AI worldwide.
