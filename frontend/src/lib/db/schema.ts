@@ -9,12 +9,18 @@ export const profiles = pgTable('profiles', {
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
   bio: text('bio'),
+  headline: varchar('headline', { length: 500 }), // Professional headline
+  location: varchar('location', { length: 255 }), // User location
   skills: text('skills').array(), // PostgreSQL array for skills
   availableFor: text('available_for').array(), // ["appointments", "quotes", "meetings"]
   isPublic: boolean('is_public').default(true).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   linkedinUrl: varchar('linkedin_url', { length: 500 }),
   otherLinks: jsonb('other_links').default('{}'),
+  experience: jsonb('experience').default('[]'), // Array of experience items
+  education: jsonb('education').default('[]'), // Array of education items
+  projects: jsonb('projects').default('[]'), // Array of projects
+  customSections: jsonb('custom_sections').default('[]'), // Array of custom sections
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({

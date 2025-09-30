@@ -37,3 +37,4 @@ yarn-error.log*
 *.temp
 debug-profiles.js
 debug-profiles.mjs
+CLAUDE.md

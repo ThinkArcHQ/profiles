@@ -100,11 +100,17 @@ export async function PUT(
       .set({
         name: body.name ?? existingProfile.name,
         bio: body.bio !== undefined ? body.bio : existingProfile.bio,
+        headline: body.headline !== undefined ? body.headline : existingProfile.headline,
+        location: body.location !== undefined ? body.location : existingProfile.location,
         skills: body.skills ?? existingProfile.skills,
         availableFor: body.availableFor ?? existingProfile.availableFor,
         isPublic: body.isPublic ?? existingProfile.isPublic,
         linkedinUrl: body.linkedinUrl !== undefined ? body.linkedinUrl : existingProfile.linkedinUrl,
         otherLinks: body.otherLinks ?? existingProfile.otherLinks,
+        experience: body.experience ?? existingProfile.experience,
+        education: body.education ?? existingProfile.education,
+        projects: body.projects ?? existingProfile.projects,
+        customSections: body.customSections ?? existingProfile.customSections,
         updatedAt: new Date(),
       })
       .where(eq(profiles.id, profileId))
@@ -116,6 +122,9 @@ export async function PUT(
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
   }
 }
+
+// PATCH /api/profiles/[id] - Partial update specific profile
+export const PATCH = PUT;
 
 // DELETE /api/profiles/[id] - Soft delete profile
 export async function DELETE(
