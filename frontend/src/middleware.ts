@@ -5,8 +5,7 @@ export default authkitMiddleware();
 export const config = {
     matcher: [
         '/',
-        '/profiles',
-        '/dashboard',
+        '/home',
         '/profile/new',
         '/calendar',
         '/settings',

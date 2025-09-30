@@ -161,8 +161,8 @@ export class ProfileTransformer {
    */
   static toPublicProfile(profile: Profile, baseUrl?: string): PublicProfile {
     const profileUrl = baseUrl 
-      ? `${baseUrl}/profiles/${profile.slug}`
-      : `/profiles/${profile.slug}`;
+      ? `${baseUrl}/${profile.slug}`
+    : `/${profile.slug}`;
 
     return {
       id: profile.id,
@@ -183,8 +183,8 @@ export class ProfileTransformer {
    */
   static toMCPProfile(profile: Profile, baseUrl?: string): MCPProfile {
     const profileUrl = baseUrl 
-      ? `${baseUrl}/profiles/${profile.slug}`
-      : `/profiles/${profile.slug}`;
+      ? `${baseUrl}/${profile.slug}`
+    : `/${profile.slug}`;
 
     return {
       slug: profile.slug,

@@ -40,8 +40,8 @@ export function SlugEditor({
   });
   const { addToast } = useToast();
 
-  const profileUrl = `${baseUrl}/profiles/${currentSlug}`;
-  const previewUrl = `${baseUrl}/profiles/${newSlug}`;
+  const profileUrl = `${baseUrl}/${currentSlug}`;
+  const previewUrl = `${baseUrl}/${newSlug}`;
 
   // Reset state when currentSlug changes
   useEffect(() => {
@@ -127,7 +127,7 @@ export function SlugEditor({
       addToast({
         type: 'success',
         title: 'Profile URL updated',
-        description: `Your profile is now available at /profiles/${newSlug}`
+        description: `Your profile is now available at /${newSlug}`
       });
     } catch (error) {
       console.error('Failed to update slug:', error);

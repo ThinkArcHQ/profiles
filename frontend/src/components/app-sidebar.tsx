@@ -7,7 +7,6 @@ import {
   Calendar,
   Home,
   MessageSquare,
-  Quote,
   Send,
   User,
   HelpCircle,
@@ -42,14 +41,9 @@ import {
 // Menu items
 const menuItems = [
   {
-    title: 'Browse Profiles',
+    title: 'Home',
     url: '/profiles',
     icon: User,
-  },
-  {
-    title: 'Dashboard',
-    url: '/dashboard',
-    icon: Home,
   },
   {
     title: 'Calendar',
@@ -60,11 +54,6 @@ const menuItems = [
     title: 'Meeting Requests',
     url: '/meeting-requests',
     icon: MessageSquare,
-  },
-  {
-    title: 'Quote Requests',
-    url: '/quote-requests',
-    icon: Quote,
   },
   {
     title: 'Sent Requests',
@@ -111,13 +100,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/profiles">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <User className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">ProfileBase</span>
-                  <span className="truncate text-xs">AI Agent Network</span>
+              <Link href="/home">
+                <div className="flex items-center w-full py-2">
+                  <span className="text-xl font-bold">
+                    <span className="text-black">Profile</span>
+                    <span className="text-orange-600">Base</span>
+                  </span>
                 </div>
               </Link>
             </SidebarMenuButton>

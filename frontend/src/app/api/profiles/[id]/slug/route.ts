@@ -112,7 +112,7 @@ export const PATCH = withAuth(async (req: NextRequest, { params }: RouteParams) 
     return NextResponse.json({
       success: true,
       slug: updatedProfile.slug,
-      profileUrl: `/profiles/${updatedProfile.slug}`,
+      profileUrl: `/${updatedProfile.slug}`,
       oldSlug: currentProfile.slug,
       message: 'Slug updated successfully'
     });

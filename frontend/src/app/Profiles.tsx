@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PublicProfile } from '@/lib/types/profile';
@@ -36,31 +36,31 @@ export default function Profiles() {
   );
 
   return (
-    <main className="bg-white py-24" id="profiles">
+    <main className="bg-gray-50 py-16" id="profiles">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Search */}
-          <div className="mb-16">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-orange-900 mb-6">
-                Featured Profiles
+          <div className="mb-12">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Discover Profiles
               </h2>
-              <p className="text-xl text-orange-700 max-w-2xl mx-auto">
-                Discover talented individuals who are ready to be found by AI agents worldwide.
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Connect with talented individuals ready to be discovered by AI agents worldwide.
               </p>
             </div>
 
-            <div className="max-w-2xl mx-auto relative">
+            <div className="max-w-xl mx-auto relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg className="w-6 h-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
               <Input
                 type="text"
-                placeholder="Search by name, skills, services, or expertise..."
+                placeholder="Search profiles by name, skills, or expertise..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-6 py-4 text-lg rounded-2xl shadow-lg"
+                className="w-full pl-11 pr-4 py-3 text-base border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
           </div>
@@ -124,81 +124,76 @@ export default function Profiles() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredProfiles.map((profile) => (
-                    <Card key={profile.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-xl mb-2">{profile.name}</CardTitle>
-                            <CardDescription className="text-sm">
-                              {profile.email}
-                            </CardDescription>
-                          </div>
-                          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    <Link 
+                      key={profile.id} 
+                      href={`/${profile.slug}`}
+                      className="group block"
+                    >
+                      <Card className="group-hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-gray-300 bg-white rounded-lg overflow-hidden cursor-pointer">
+                        {/* Profile Image */}
+                        <div className="relative h-32 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                          <div className="text-white font-bold text-2xl">
                             {profile.name.charAt(0).toUpperCase()}
                           </div>
-                        </div>
-                      </CardHeader>
-                      
-                      <CardContent>
-                        <p className="text-orange-700 mb-4 line-clamp-3">
-                          {profile.bio}
-                        </p>
-
-                        {/* Skills */}
-                        {profile.skills.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="text-sm font-semibold text-orange-900 mb-2">Skills</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {profile.skills.slice(0, 3).map((skill, index) => (
-                                <span
-                                  key={index}
-                                  className="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full font-medium"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
-                              {profile.skills.length > 3 && (
-                                <span className="px-3 py-1 bg-orange-50 text-orange-600 text-sm rounded-full font-medium">
-                                  +{profile.skills.length - 3} more
-                                </span>
-                              )}
-                            </div>
+                          {/* Available Status Badge */}
+                          <div className="absolute top-2 right-2 flex items-center bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
+                            <div className="w-2 h-2 bg-green-400 rounded-full mr-1.5"></div>
+                            <span className="text-xs text-gray-700 font-medium">Available</span>
                           </div>
-                        )}
+                        </div>
+                        
+                        <div className="p-4">
+                          {/* Name */}
+                          <div className="mb-3">
+                            <h3 className="font-semibold text-gray-900 text-base">
+                              {profile.name}
+                            </h3>
+                          </div>
 
-                        {/* Available For */}
-                        {profile.availableFor.length > 0 && (
-                          <div className="mb-6">
-                            <h4 className="text-sm font-semibold text-orange-900 mb-2">Available For</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {profile.availableFor.map((item, index) => (
+                          {/* Bio Preview */}
+                          {profile.bio && (
+                            <p className="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2">
+                              {profile.bio}
+                            </p>
+                          )}
+
+                          {/* Available For - Simplified */}
+                          {profile.availableFor.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {profile.availableFor.slice(0, 2).map((item, index) => (
                                 <span
-                                  key={index}
-                                  className="px-3 py-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm rounded-full font-medium capitalize"
+                                  key={`available-${index}`}
+                                  className="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs rounded font-medium capitalize"
                                 >
                                   {item}
                                 </span>
                               ))}
+                              {profile.availableFor.length > 2 && (
+                                <span className="px-2 py-0.5 bg-orange-50 text-orange-600 text-xs rounded font-medium">
+                                  +{profile.availableFor.length - 2} more
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Single Action Button */}
+                          <div className="pt-2 border-t border-gray-100">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-500">
+                                Click to view profile
+                              </span>
+                              <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center group-hover:bg-orange-600 transition-colors">
+                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
                             </div>
                           </div>
-                        )}
-
-                        <div className="flex gap-3">
-                          <Button asChild className="flex-1">
-                            <Link href={`/profiles/${profile.slug}`}>
-                              View Profile
-                            </Link>
-                          </Button>
-                          <Button variant="outline" asChild>
-                            <Link href={`/request/${profile.id}`}>
-                              Request Meeting
-                            </Link>
-                          </Button>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               )}

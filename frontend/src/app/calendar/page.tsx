@@ -112,7 +112,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen w-full bg-background overflow-hidden">
       <FullScreenCalendar data={calendarData} />
     </div>
   );

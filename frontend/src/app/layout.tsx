@@ -4,7 +4,6 @@ import "./globals.css";
 import { AuthKitProvider } from '@workos-inc/authkit-nextjs/components';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { MCPServerInit } from '@/components/mcp-server-init';
-import { OnboardingWrapper } from '@/components/onboarding-wrapper';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
 
@@ -37,11 +36,9 @@ export default function RootLayout({
         <ErrorBoundary>
           <ToastProvider>
             <AuthKitProvider>
-              <OnboardingWrapper>
-                <DashboardLayout>
-                  {children}
-                </DashboardLayout>
-              </OnboardingWrapper>
+              <DashboardLayout>
+                {children}
+              </DashboardLayout>
             </AuthKitProvider>
           </ToastProvider>
         </ErrorBoundary>

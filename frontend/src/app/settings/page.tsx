@@ -156,7 +156,7 @@ export default function SettingsPage() {
 
       if (response.ok) {
         setProfile(null);
-        router.push('/dashboard');
+        router.push('/home');
       }
     } catch (error) {
       console.error('Error deleting profile:', error);
@@ -537,7 +537,7 @@ export default function SettingsPage() {
               <ProfileUrlSharing
                 slug={profile.slug}
                 isPublic={profile.isPublic}
-                profileUrl={`${window.location.origin}/profiles/${profile.slug}`}
+                profileUrl={`${window.location.origin}/${profile.slug}`}
                 profileId={parseInt(profile.id)}
               />
             </div>

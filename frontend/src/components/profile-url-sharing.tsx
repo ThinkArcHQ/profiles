@@ -53,7 +53,7 @@ export function ProfileUrlSharing({
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
   const { addToast } = useToast();
 
-  const fullUrl = profileUrl || `${window.location.origin}/profiles/${slug}`;
+  const fullUrl = profileUrl || `${window.location.origin}/${slug}`;
 
   useEffect(() => {
     if (profileId && isPublic) {

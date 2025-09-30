@@ -32,7 +32,6 @@ export default function MeetingRequestsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [typeFilter, setTypeFilter] = useState<string>('all')
   const [showCounterProposal, setShowCounterProposal] = useState<string | null>(null)
   const [showHistory, setShowHistory] = useState<string | null>(null)
   const [responseMessage, setResponseMessage] = useState('')
@@ -44,7 +43,7 @@ export default function MeetingRequestsPage() {
 
   useEffect(() => {
     filterRequests()
-  }, [requests, searchTerm, statusFilter, typeFilter])
+  }, [requests, searchTerm, statusFilter])
 
   const fetchMeetingRequests = async () => {
     try {
@@ -88,10 +87,6 @@ export default function MeetingRequestsPage() {
 
     if (statusFilter !== 'all') {
       filtered = filtered.filter(request => request.status === statusFilter)
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(request => request.requestType === typeFilter)
     }
 
     setFilteredRequests(filtered)
@@ -237,20 +232,6 @@ export default function MeetingRequestsPage() {
                   className="pl-10"
                 />
               </div>
-            </div>
-            <div className="w-full sm:w-48">
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="meeting">Meeting</SelectItem>
-                  <SelectItem value="quote">Quote</SelectItem>
-                  <SelectItem value="appointment">Appointment</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div className="w-full sm:w-48">
               <Select value={statusFilter} onValueChange={setStatusFilter}>

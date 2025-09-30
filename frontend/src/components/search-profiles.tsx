@@ -247,7 +247,7 @@ export function SearchProfiles({ showFilters = true, limit = 12, className = '' 
                             <div className="flex gap-2">
                               <Button asChild size="sm" variant="outline" className="rounded-full border-gray-300 hover:bg-gray-50 font-medium">
                                 <Link 
-                                  href={`/profiles/${profile.slug}`}
+                                  href={`/${profile.slug}`}
                                   onClick={() => trackProfileClick(profile.id, 'search')}
                                 >
                                   View Profile

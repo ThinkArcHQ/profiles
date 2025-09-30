@@ -26,21 +26,13 @@ interface DashboardLayoutProps {
 
 const getBreadcrumbs = (pathname: string) => {
   const segments = pathname.split('/').filter(Boolean);
-  const breadcrumbs = [{ title: 'Home', href: '/dashboard' }];
+  const breadcrumbs = [{ title: 'Home', href: '/profiles' }];
   
   // Handle different route patterns
   if (segments[0] === 'profiles' && segments[1]) {
     // For /profiles/[slug] routes
     breadcrumbs.push({ title: 'Profiles', href: '/profiles' });
     breadcrumbs.push({ title: segments[1], href: pathname });
-  } else if (segments[0] === 'dashboard') {
-    // Skip the first segment if it's 'dashboard' to avoid duplicate
-    const relevantSegments = segments.slice(1);
-    relevantSegments.forEach((segment, index) => {
-      const href = '/dashboard' + (relevantSegments.length > 0 ? '/' + relevantSegments.slice(0, index + 1).join('/') : '');
-      const title = segment.charAt(0).toUpperCase() + segment.slice(1);
-      breadcrumbs.push({ title, href });
-    });
   } else {
     // Handle other routes
     segments.forEach((segment, index) => {
@@ -61,12 +53,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const authPages = ['/login', '/logout', '/profile/new'];
   const isExactHomePage = pathname === '/';
   
+  // Exclude profiles pages from dashboard layout (they have their own full-screen layout)
+  const isProfilesPage = pathname.startsWith('/profiles');
+  
+  // Check if this is a root-level profile page (individual profile slug)
+  // Root-level profile pages are paths that don't start with known dashboard routes
+  const knownRoutes = ['/calendar', '/settings', '/support', '/meeting-requests', 
+                      '/sent-requests', '/home', '/profile', '/api'];
+  const isRootLevelProfilePage = !knownRoutes.some(route => pathname.startsWith(route)) && 
+                                pathname !== '/' && 
+                                !authPages.some(page => pathname.startsWith(page));
+  
   // Show sidebar for dashboard routes when user is authenticated or while loading
-  const isDashboardRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/calendar') || 
+  const isDashboardRoute = pathname.startsWith('/calendar') || 
                           pathname.startsWith('/settings') || pathname.startsWith('/support') ||
-                          pathname.startsWith('/profiles') || pathname.startsWith('/meeting-requests') ||
-                          pathname.startsWith('/quote-requests') || pathname.startsWith('/sent-requests');
-  const shouldShowSidebar = isDashboardRoute && !authPages.some(page => pathname.startsWith(page)) && !isExactHomePage;
+                          pathname.startsWith('/meeting-requests') ||
+                          pathname.startsWith('/sent-requests');
+  const shouldShowSidebar = isDashboardRoute && !authPages.some(page => pathname.startsWith(page)) && !isExactHomePage && !isProfilesPage && !isRootLevelProfilePage;
 
   // Debug logging
   console.log('DashboardLayout - pathname:', pathname);

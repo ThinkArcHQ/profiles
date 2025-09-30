@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Settings
 } from 'lucide-react';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +35,7 @@ export default function ProfilesPage() {
       id: 'requests', 
       icon: MessageSquare, 
       label: 'Requests',
-      href: '/dashboard'
+      href: '/meeting-requests'
     },
     { 
       id: 'calendar', 
@@ -57,26 +58,42 @@ export default function ProfilesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Top Search Bar */}
-      <div className="sticky top-0 z-10 px-4 py-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search people..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-full h-11"
-            />
+    <div className="min-h-screen bg-white">
+      {/* Top Navigation Bar */}
+      <div className="sticky top-0 z-20 bg-white border-b border-gray-200">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center">
+              <div className="text-2xl font-bold">
+                <span className="text-black">Profile</span>
+                <span className="text-orange-600">Base</span>
+              </div>
+            </div>
+            
+            {/* Sidebar Toggle Button */}
+            <SidebarTrigger />
           </div>
         </div>
       </div>
 
-      {/* Main Feed */}
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      {/* Search Bar */}
+      <div className="sticky top-[73px] z-10 bg-white border-b border-gray-100 px-6 py-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search people..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-gray-50 border-gray-200 focus:bg-white focus:border-orange-300 focus:ring-2 focus:ring-orange-100 rounded-full h-11"
+          />
+        </div>
+      </div>
+
+      {/* Main Content - Full Width */}
+      <div className="px-6 py-6">
         {/* Profile Views Card */}
-        <Card className="mb-6 bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 border-purple-200/60 shadow-sm hover:shadow-md cursor-pointer rounded-xl">
+        <Card className="mb-6 bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 border-purple-200/60 shadow-sm hover:shadow-md cursor-pointer rounded-xl max-w-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -104,7 +121,7 @@ export default function ProfilesPage() {
         </Card>
 
         {/* Create Profile Prompt */}
-        <Card className="mb-8 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-emerald-200/60 shadow-sm rounded-xl">
+        <Card className="mb-8 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-emerald-200/60 shadow-sm rounded-xl max-w-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -121,12 +138,12 @@ export default function ProfilesPage() {
           </CardContent>
         </Card>
 
-        {/* People Feed */}
-        <div className="space-y-4">
+        {/* People Feed - Full Width */}
+        <div className="w-full">
           <SearchProfiles 
             showFilters={false}
             limit={20}
-            className="space-y-4"
+            className="w-full"
           />
         </div>
       </div>

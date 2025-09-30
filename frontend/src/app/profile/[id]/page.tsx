@@ -41,7 +41,7 @@ export default function ProfilePage() {
         
         // If profile has a slug, redirect to slug-based URL
         if (data.slug) {
-          router.replace(`/profiles/${data.slug}`);
+          router.replace(`/${data.slug}`);
           return;
         }
       } else if (response.status === 404) {

@@ -21,12 +21,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/dashboard`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
       url: `${baseUrl}/profile/new`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -46,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .limit(1000); // Limit to prevent huge sitemaps
 
     const profilePages: MetadataRoute.Sitemap = publicProfiles.map((profile) => ({
-      url: `${baseUrl}/profiles/${profile.slug}`,
+      url: `${baseUrl}/${profile.slug}`,
       lastModified: profile.updatedAt,
       changeFrequency: 'weekly' as const,
       priority: 0.6,

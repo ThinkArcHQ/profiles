@@ -74,7 +74,7 @@ export default function NewProfile() {
       });
 
       if (response.ok) {
-        router.push('/dashboard');
+        router.push('/meeting-requests');
       } else {
         alert('Failed to create profile');
       }
@@ -260,8 +260,7 @@ export default function NewProfile() {
                     
                     <div className="space-y-3">
                       {[
-                        { value: 'meetings', label: 'Meeting Requests', desc: 'General conversations, consultations, networking' },
-                        { value: 'quotes', label: 'Quote Requests', desc: 'Paid work, consulting, project estimates' }
+                        { value: 'meetings', label: 'Meeting Requests', desc: 'General conversations, consultations, networking' }
                       ].map((option) => (
                         <div key={option.value} className="flex items-start space-x-3 p-3 border border-orange-500 rounded-lg hover:bg-orange-50 transition-colors">
                           <Checkbox

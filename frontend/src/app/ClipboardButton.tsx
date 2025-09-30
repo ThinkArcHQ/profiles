@@ -2,7 +2,13 @@
 
 import { useState } from 'react';
 
-export default function ClipboardButton({ textToCopy }: { textToCopy: string }) {
+export default function ClipboardButton({ 
+  textToCopy, 
+  iconOnly = false 
+}: { 
+  textToCopy: string;
+  iconOnly?: boolean;
+}) {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
@@ -11,6 +17,20 @@ export default function ClipboardButton({ textToCopy }: { textToCopy: string }) 
       setTimeout(() => setIsCopied(false), 2000);
     });
   };
+
+  if (iconOnly) {
+    return (
+      <button
+        onClick={handleCopy}
+        className="p-2 rounded-lg hover:bg-white/20 text-white hover:text-orange-100 transition-all duration-200 hover:scale-105"
+        title={isCopied ? 'Copied!' : 'Copy to clipboard'}
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      </button>
+    );
+  }
 
   return (
     <button
