@@ -22,7 +22,10 @@ import {
   GraduationCap,
   X,
   Save,
-  Sparkles
+  Sparkles,
+  Home,
+  Settings,
+  Search
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@workos-inc/authkit-nextjs/components';
@@ -131,6 +134,7 @@ export default function SlugProfileClient() {
     message: '',
     preferredTime: ''
   });
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (slug) {
@@ -377,19 +381,45 @@ export default function SlugProfileClient() {
     <div className="min-h-screen bg-white">
       {/* Top Navigation */}
       <div className="border-b border-gray-200 sticky top-0 z-10 bg-white">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/home" className="text-xl font-bold">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center justify-between gap-6 h-16">
+            {/* Logo */}
+            <Link href="/home" className="text-xl font-bold flex-shrink-0">
               <span className="text-black">Profile</span>
               <span className="text-orange-600">Base</span>
             </Link>
-            <div className="flex items-center gap-3">
-              <Link href="/home" className="text-sm text-gray-600 hover:text-gray-900">
-                Browse
+
+            {/* Search Bar */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search people..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      window.location.href = `/home?search=${encodeURIComponent(searchQuery)}`;
+                    }
+                  }}
+                  className="pl-10 pr-4 h-9 w-full bg-gray-50 border-gray-200 focus:bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link href="/home">
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Home className="h-5 w-5" />
+                </Button>
               </Link>
               {user ? (
                 <Link href="/settings">
-                  <Button variant="outline" size="sm">Settings</Button>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Settings className="h-5 w-5" />
+                  </Button>
                 </Link>
               ) : (
                 <Link href="/login">
@@ -401,98 +431,202 @@ export default function SlugProfileClient() {
         </div>
       </div>
 
-      {/* Main Content - Single Page Layout */}
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        {/* Profile Header */}
-        <div className="mb-12">
-          <div className="flex items-start gap-8 mb-8">
-            <Avatar className="h-24 w-24 flex-shrink-0">
-              <AvatarFallback className="text-2xl font-semibold bg-gray-100 text-gray-700">
-                {getInitials(profile.name)}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">{profile.name}</h1>
+      {/* Main Content - Two Column Layout */}
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Sidebar - Sticky Profile Card */}
+          <div className="lg:col-span-4">
+            <div className="lg:sticky lg:top-24 space-y-6">
+              {/* Profile Card */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <div className="flex flex-col items-center text-center mb-6">
+                  <Avatar className="h-32 w-32 mb-4">
+                    <AvatarFallback className="text-3xl font-semibold bg-gray-100 text-gray-700">
+                      {getInitials(profile.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <h1 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h1>
                   {profile.headline ? (
-                    <p className="text-xl text-gray-600 mb-3">{profile.headline}</p>
+                    <p className="text-base text-gray-600 mb-3">{profile.headline}</p>
                   ) : isOwner ? (
-                    <p className="text-xl text-gray-400 italic mb-3">Add your professional headline</p>
+                    <p className="text-sm text-gray-400 italic mb-3">Add your professional headline</p>
                   ) : null}
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+
+                  <div className="flex flex-col gap-2 text-sm text-gray-500 w-full">
                     {profile.location ? (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center justify-center gap-2">
                         <MapPin className="h-4 w-4" />
                         {profile.location}
                       </div>
                     ) : isOwner ? (
-                      <div className="flex items-center gap-1 text-gray-400 italic">
+                      <div className="flex items-center justify-center gap-2 text-gray-400 italic">
                         <MapPin className="h-4 w-4" />
                         Add location
                       </div>
                     ) : null}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-center gap-2">
                       <Calendar className="h-4 w-4" />
                       Joined {formatDate(profile.createdAt)}
                     </div>
                   </div>
+
+                  {isOwner && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4 w-full"
+                      onClick={() => {
+                        setFormData({
+                          name: profile.name,
+                          headline: profile.headline,
+                          location: profile.location
+                        });
+                        setEditBasicInfo(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  )}
                 </div>
-                {isOwner && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setFormData({
-                        name: profile.name,
-                        headline: profile.headline,
-                        location: profile.location
-                      });
-                      setEditBasicInfo(true);
-                    }}
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit
+
+                <Separator className="mb-6" />
+
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  {!isOwner && (
+                    <Button
+                      className="w-full bg-orange-600 hover:bg-orange-700"
+                      onClick={() => setShowMeetingRequest(true)}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Request Meeting
+                    </Button>
+                  )}
+                  <Button variant="outline" className="w-full" onClick={handleCopyProfile}>
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share Profile
+                      </>
+                    )}
                   </Button>
-                )}
+                  {profile.email && !isOwner && (
+                    <Button variant="outline" className="w-full">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Email
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                {!isOwner && (
-                  <Button
-                    className="bg-orange-600 hover:bg-orange-700"
-                    onClick={() => setShowMeetingRequest(true)}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Request Meeting
-                  </Button>
-                )}
-                <Button variant="outline" onClick={handleCopyProfile}>
-                  {copied ? (
-                    <>
-                      <Check className="h-4 w-4 mr-2" />
-                      Copied!
-                    </>
+              {/* Links Card */}
+              {((profile.linkedinUrl || (profile.otherLinks && Object.keys(profile.otherLinks).length > 0)) || isOwner) && (
+                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900">Links</h3>
+                    {isOwner && (
+                      <Button variant="ghost" size="sm" onClick={() => setEditLinks(true)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {(profile.linkedinUrl || (profile.otherLinks && Object.keys(profile.otherLinks).length > 0)) ? (
+                    <div className="space-y-3">
+                      {profile.linkedinUrl && (
+                        <a
+                          href={profile.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 text-sm text-gray-700 hover:text-gray-900"
+                        >
+                          <Linkedin className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                          <span className="flex-1 truncate">LinkedIn</span>
+                          <ExternalLink className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                        </a>
+                      )}
+                      {profile.otherLinks && Object.entries(profile.otherLinks).map(([key, url]: [string, any], index) => (
+                        <a
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 text-sm text-gray-700 hover:text-gray-900"
+                        >
+                          <Globe className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                          <span className="flex-1 truncate">{key}</span>
+                          <ExternalLink className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                        </a>
+                      ))}
+                    </div>
                   ) : (
-                    <>
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </>
+                    <div className="text-sm">
+                      <p className="text-gray-500 italic mb-3">No links added yet</p>
+                      {isOwner && (
+                        <Button size="sm" variant="outline" className="w-full" onClick={() => setEditLinks(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Links
+                        </Button>
+                      )}
+                    </div>
                   )}
-                </Button>
-                {profile.email && !isOwner && (
-                  <Button variant="outline">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Email
-                  </Button>
+                </div>
+              )}
+
+              {/* Skills Card */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">Skills</h3>
+                  {isOwner && (
+                    <Button variant="ghost" size="sm" onClick={() => setEditSkills(true)}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                {profile.skills.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {profile.skills.map((skill, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="px-2 py-1 text-xs bg-gray-100 text-gray-700 hover:bg-gray-200 font-normal"
+                      >
+                        {skill}
+                        {isOwner && (
+                          <button
+                            onClick={() => removeSkill(skill)}
+                            className="ml-1.5 hover:text-gray-900"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm">
+                    <p className="text-gray-500 italic mb-3">
+                      {isOwner ? "Showcase your expertise" : "No skills added yet"}
+                    </p>
+                    {isOwner && (
+                      <Button size="sm" variant="outline" className="w-full" onClick={() => setEditSkills(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Skills
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
           </div>
-        </div>
 
-        <Separator className="my-12" />
+          {/* Right Main Content */}
+          <div className="lg:col-span-8 space-y-8">
 
         {/* About Section */}
         <div className="mb-12">
@@ -544,67 +678,6 @@ export default function SlugProfileClient() {
           )}
         </div>
 
-        <Separator className="my-12" />
-
-        {/* Skills Section - Always show */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Skills</h2>
-            {isOwner && (
-              <Button variant="ghost" size="sm" onClick={() => setEditSkills(true)}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          {profile.skills.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {profile.skills.map((skill, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 font-normal"
-                >
-                  {skill}
-                  {isOwner && (
-                    <button
-                      onClick={() => removeSkill(skill)}
-                      className="ml-2 hover:text-gray-900"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <Sparkles className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-gray-600 leading-relaxed">
-                  {isOwner ? (
-                    <>
-                      <span className="font-medium text-gray-900">Showcase your expertise!</span> Add skills to highlight what you're great at. This helps people find you and understand your strengths.
-                    </>
-                  ) : (
-                    <span className="text-gray-500 italic">No skills added yet.</span>
-                  )}
-                </p>
-                {isOwner && (
-                  <Button
-                    size="sm"
-                    className="mt-3"
-                    onClick={() => setEditSkills(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Skills
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <Separator className="my-12" />
 
         {/* Experience Section - Always show */}
         <div className="mb-12">
@@ -917,74 +990,6 @@ export default function SlugProfileClient() {
           )}
         </div>
 
-        <Separator className="my-12" />
-
-        {/* Links Section - Always show */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Links</h2>
-            {isOwner && (
-              <Button variant="ghost" size="sm" onClick={() => setEditLinks(true)}>
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          {(profile.linkedinUrl || (profile.otherLinks && Object.keys(profile.otherLinks).length > 0)) ? (
-            <div className="space-y-3">
-              {profile.linkedinUrl && (
-                <a
-                  href={profile.linkedinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-700 hover:text-gray-900"
-                >
-                  <Linkedin className="h-5 w-5 text-blue-600" />
-                  <span className="flex-1">LinkedIn</span>
-                  <ExternalLink className="h-4 w-4 text-gray-400" />
-                </a>
-              )}
-              {profile.otherLinks && Object.entries(profile.otherLinks).map(([key, url]: [string, any], index) => (
-                <a
-                  key={index}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-700 hover:text-gray-900"
-                >
-                  <Globe className="h-5 w-5 text-gray-600" />
-                  <span className="flex-1">{key}</span>
-                  <ExternalLink className="h-4 w-4 text-gray-400" />
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <Sparkles className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-gray-600 leading-relaxed">
-                  {isOwner ? (
-                    <>
-                      <span className="font-medium text-gray-900">Connect your online presence!</span> Add links to your LinkedIn, portfolio, GitHub, or personal website.
-                    </>
-                  ) : (
-                    <span className="text-gray-500 italic">No links added yet.</span>
-                  )}
-                </p>
-                {isOwner && (
-                  <Button
-                    size="sm"
-                    className="mt-3"
-                    onClick={() => setEditLinks(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Links
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Custom Sections */}
         {profile.customSections && profile.customSections.map((section) => (
           <div key={section.id}>
@@ -1012,6 +1017,8 @@ export default function SlugProfileClient() {
             </button>
           </>
         )}
+          </div>
+        </div>
       </div>
 
       {/* Edit Basic Info Dialog */}
