@@ -14,17 +14,20 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [hasProfile, setHasProfile] = useState(false);
   const [meetingRequestsCount, setMeetingRequestsCount] = useState(0);
 
   useEffect(() => {
+    // Wait for auth to complete before checking profile
+    if (authLoading) return;
+
     if (user) {
       checkUserProfile();
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const checkUserProfile = async () => {
     try {

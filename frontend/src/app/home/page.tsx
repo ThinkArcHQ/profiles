@@ -23,7 +23,7 @@ interface Profile {
 }
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,12 +34,18 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchProfiles();
+  }, []);
+
+  useEffect(() => {
+    // Wait for auth to complete before checking profile
+    if (authLoading) return;
+
     if (user) {
       checkUserProfile();
     } else {
       setCheckingProfile(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchProfiles = async () => {
     try {
