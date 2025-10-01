@@ -46,7 +46,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   console.log('DashboardLayout - shouldShowSidebar:', shouldShowSidebar);
 
   if (shouldShowSidebar) {
-
     return (
       <>
         <AppSidebar />

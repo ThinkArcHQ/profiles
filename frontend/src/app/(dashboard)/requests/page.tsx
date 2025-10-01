@@ -390,111 +390,115 @@ export default function RequestsPage() {
             </Card>
           ) : (
             filteredReceived.map((request) => (
-              <Card key={request.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-start gap-4">
-                      <div className={`p-2 rounded-full ${getTypeColor(request.requestType)}`}>
-                        <User className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-lg">{request.requesterName}</h3>
-                          <Badge variant="outline" className="text-xs">
-                            {request.requestType.charAt(0).toUpperCase() + request.requestType.slice(1)}
-                          </Badge>
+              <Card key={request.id} className="group border-0 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden bg-white">
+                <CardContent className="p-0">
+                  {/* Compact Header */}
+                  <div className="bg-gradient-to-r from-orange-50 to-orange-100/50 px-4 py-3 border-b border-orange-100">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow">
+                          <User className="h-4 w-4 text-white" />
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Mail className="h-4 w-4" />
-                          {request.requesterEmail}
+                        <div>
+                          <h3 className="font-semibold text-base text-gray-900">{request.requesterName}</h3>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                            <Mail className="h-3 w-3" />
+                            <span>{request.requesterEmail}</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getStatusColor(request.status)} className="text-xs px-2 py-0.5">
+                          {request.status.replace('_', ' ').charAt(0).toUpperCase() + request.status.replace('_', ' ').slice(1)}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs border-orange-200 text-orange-700 bg-orange-50 px-2 py-0.5">
+                          {request.requestType.charAt(0).toUpperCase() + request.requestType.slice(1)}
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge variant={getStatusColor(request.status)}>
-                      {request.status.replace('_', ' ').charAt(0).toUpperCase() +
-                       request.status.replace('_', ' ').slice(1)}
-                    </Badge>
                   </div>
 
-                  <div className="mb-4">
-                    <h4 className="font-medium mb-2">Message:</h4>
-                    <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{request.message}</p>
+                  {/* Compact Content */}
+                  <div className="px-4 py-3 space-y-2.5">
+                    <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-700 leading-snug">{request.message}</p>
+                    </div>
+
+                    {request.preferredTime && (
+                      <div className="bg-blue-50/50 border border-blue-100 p-2 rounded-lg flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-blue-600 font-medium">Preferred Time</p>
+                          <p className="text-xs font-semibold text-gray-900">{formatDate(request.preferredTime)}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {request.status === 'counter_proposed' && request.proposedTime && (
+                      <div className="bg-purple-50 border border-purple-200 p-2 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <ArrowRight className="h-4 w-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-purple-600 font-medium">Counter: {formatDate(request.proposedTime)}</p>
+                            {request.counterMessage && (
+                              <p className="text-xs text-purple-700 mt-1">{request.counterMessage}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {request.preferredTime && (
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar className="h-4 w-4" />
-                        <span className="font-medium">Preferred time:</span>
-                        {formatDate(request.preferredTime)}
-                      </div>
-                    </div>
-                  )}
-
-                  {request.status === 'counter_proposed' && request.proposedTime && (
-                    <div className="mb-4 bg-blue-50 p-3 rounded-lg">
-                      <div className="flex items-center gap-2 text-sm text-blue-700 mb-2">
-                        <ArrowRight className="h-4 w-4" />
-                        <span className="font-medium">Your proposed time:</span>
-                        {formatDate(request.proposedTime)}
-                      </div>
-                      {request.counterMessage && (
-                        <p className="text-sm text-blue-700">{request.counterMessage}</p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {formatDate(request.createdAt)}
-                      </div>
+                  {/* Compact Footer */}
+                  <div className="px-4 pb-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <Clock className="h-3 w-3" />
+                      <span>{formatDate(request.createdAt)}</span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowHistory(showHistory === request.id ? null : request.id)}
-                        className="text-blue-600 hover:text-blue-700"
+                        className="text-xs text-blue-600 hover:text-blue-700 h-6 px-2"
                       >
-                        <History className="h-4 w-4 mr-1" />
-                        {showHistory === request.id ? 'Hide' : 'Show'} History
+                        <History className="h-3 w-3 mr-1" />
+                        History
                       </Button>
                     </div>
 
                     {request.status === 'pending' && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5">
                         <Button
                           size="sm"
                           onClick={() => handleStatusUpdate(request.id, 'accepted')}
                           disabled={actionLoading === request.id}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-green-600 hover:bg-green-700 h-7 text-xs px-3"
                         >
-                          {actionLoading === request.id ? 'Processing...' : 'Accept'}
+                          Accept
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => setShowCounterProposal(request.id)}
                           disabled={actionLoading === request.id}
-                          className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                          className="border-orange-300 text-orange-600 hover:bg-orange-50 h-7 text-xs px-3"
                         >
-                          Counter Propose
+                          Counter
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleStatusUpdate(request.id, 'rejected')}
                           disabled={actionLoading === request.id}
-                          className="border-red-300 text-red-600 hover:bg-red-50"
+                          className="border-red-300 text-red-600 hover:bg-red-50 h-7 text-xs px-3"
                         >
-                          {actionLoading === request.id ? 'Processing...' : 'Decline'}
+                          Decline
                         </Button>
                       </div>
                     )}
                   </div>
 
                   {showHistory === request.id && (
-                    <div className="mt-6 pt-6 border-t">
+                    <div className="px-4 pb-3">
                       <RequestHistory request={request} />
                     </div>
                   )}
