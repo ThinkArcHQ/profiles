@@ -3,58 +3,31 @@ import { db } from '@/lib/db/connection';
 import { appointments, profiles, type NewAppointment } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { PrivacyService } from '@/lib/services/privacy-service';
-import { MCPErrorHandler, MCPErrorCodes } from '@/lib/utils/mcp-errors';
-import { withMCPMiddleware, MCPMiddleware } from '@/lib/middleware/mcp-middleware';
 
 /**
  * MCP Tool: request_meeting
- * 
+ *
  * Request a meeting with a person by their profile slug
- * This endpoint is designed for AI agent consumption via MCP
+ * Simple HTTP API for the standalone MCP server to call
  */
-export const POST = withMCPMiddleware(
-  {
-    endpoint: 'request_meeting',
-    rateLimiter: 'requestMeeting',
-    allowedMethods: ['POST'],
-  },
-  async (request: NextRequest, context) => {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { 
-      profileSlug, 
-      requesterName, 
-      requesterEmail, 
-      message, 
-      preferredTime, 
-      requestType = 'meeting' 
-    } = body;
-
-    // Validate required fields
-    if (!profileSlug || !requesterName || !requesterEmail || !message || !requestType) {
-      const errorResponse = MCPErrorHandler.createMeetingError(
-        'Missing required fields: profileSlug, requesterName, requesterEmail, message, and requestType are required',
-        MCPErrorCodes.VALIDATION_ERROR
-      );
-      return NextResponse.json(errorResponse, { status: 400 });
-    }
-
-    // Validate all parameters
-    const validation = MCPErrorHandler.validateCommonParams({
+    const {
       profileSlug,
       requesterName,
       requesterEmail,
       message,
-      requestType,
-    });
+      preferredTime,
+      requestType = 'meeting'
+    } = body;
 
-    if (!validation.isValid) {
-      const errorResponse = MCPErrorHandler.createMeetingError(
-        `Validation failed: ${validation.errors.join(', ')}`,
-        MCPErrorCodes.VALIDATION_ERROR,
-        { errors: validation.errors }
-      );
-      return NextResponse.json(errorResponse, { status: 400 });
+    // Validate required fields
+    if (!profileSlug || !requesterName || !requesterEmail || !message || !requestType) {
+      return NextResponse.json({
+        success: false,
+        error: 'Missing required fields: profileSlug, requesterName, requesterEmail, message, requestType'
+      }, { status: 400 });
     }
 
     // Find profile by slug
@@ -64,47 +37,50 @@ export const POST = withMCPMiddleware(
       .where(eq(profiles.slug, profileSlug.toLowerCase().trim()));
 
     if (!profile) {
-      const errorResponse = MCPErrorHandler.createMeetingError(
-        'Profile not found',
-        MCPErrorCodes.PROFILE_NOT_FOUND
-      );
-      return NextResponse.json(errorResponse, { status: 404 });
+      return NextResponse.json({
+        success: false,
+        error: 'Profile not found'
+      }, { status: 404 });
     }
 
     // Check if profile can be contacted (privacy check)
     if (!PrivacyService.canContactProfile(profile)) {
-      // Return privacy-safe error
-      const errorResponse = MCPErrorHandler.createPrivacySafeError(
-        'Profile is private',
-        'meeting'
-      );
-      return NextResponse.json(errorResponse, { status: 404 });
+      return NextResponse.json({
+        success: false,
+        error: 'Profile is not available for contact'
+      }, { status: 404 });
     }
 
     // Check if the profile accepts this type of request
-    if (!profile.availableFor.includes(requestType)) {
-      const availableTypes = profile.availableFor.join(', ');
-      const errorResponse = MCPErrorHandler.createMeetingError(
-        `This person is not available for ${requestType} requests. Available for: ${availableTypes}`,
-        MCPErrorCodes.REQUEST_TYPE_NOT_AVAILABLE
-      );
-      return NextResponse.json(errorResponse, { status: 400 });
+    // Handle both singular and plural forms (meeting/meetings, quote/quotes)
+    const normalizedRequestType = requestType.endsWith('s') ? requestType : `${requestType}s`;
+    const isAvailable = profile.availableFor.some(type =>
+      type === requestType || type === normalizedRequestType
+    );
+
+    if (!isAvailable) {
+      return NextResponse.json({
+        success: false,
+        error: `Profile is not available for ${requestType}. Available for: ${profile.availableFor.join(', ')}`
+      }, { status: 400 });
     }
 
     // Parse preferred time if provided
     let parsedPreferredTime: Date | null = null;
     if (preferredTime) {
-      const timeValidation = MCPErrorHandler.validatePreferredTime(preferredTime);
-      if (!timeValidation.isValid) {
-        const errorResponse = MCPErrorHandler.createMeetingError(
-          timeValidation.error!,
-          preferredTime && new Date(preferredTime) < new Date() 
-            ? MCPErrorCodes.INVALID_TIME_PAST 
-            : MCPErrorCodes.INVALID_TIME_FORMAT
-        );
-        return NextResponse.json(errorResponse, { status: 400 });
+      parsedPreferredTime = new Date(preferredTime);
+      if (isNaN(parsedPreferredTime.getTime())) {
+        return NextResponse.json({
+          success: false,
+          error: 'Invalid preferredTime format'
+        }, { status: 400 });
       }
-      parsedPreferredTime = timeValidation.parsedTime!;
+      if (parsedPreferredTime < new Date()) {
+        return NextResponse.json({
+          success: false,
+          error: 'Preferred time must be in the future'
+        }, { status: 400 });
+      }
     }
 
     // Create the appointment request
@@ -119,67 +95,32 @@ export const POST = withMCPMiddleware(
       status: 'pending',
     };
 
-    let createdAppointment;
-    try {
-      [createdAppointment] = await db
-        .insert(appointments)
-        .values(newAppointment)
-        .returning();
-    } catch (error: any) {
-      console.error('Database error creating appointment:', error);
-      const errorResponse = MCPErrorHandler.createMeetingError(
-        'Failed to create meeting request',
-        MCPErrorCodes.DATABASE_ERROR
-      );
-      return NextResponse.json(errorResponse, { status: 500 });
-    }
+    const [createdAppointment] = await db
+      .insert(appointments)
+      .values(newAppointment)
+      .returning();
 
-    // Log successful MCP meeting request (without sensitive data)
     if (process.env.NODE_ENV === 'development') {
-      console.log(`MCP Meeting request created: ID=${createdAppointment.id}, type=${requestType}, profile=${profileSlug}`);
+      console.log(`MCP Meeting request created: ID=${createdAppointment.id}, profile=${profileSlug}`);
     }
 
-    // Return MCP-compatible success response
-    return MCPMiddleware.createSuccessResponse({
+    return NextResponse.json({
       success: true,
       requestId: createdAppointment.id.toString(),
-      message: `Meeting request sent successfully to ${profile.name}. They will receive your request and respond via email.`,
+      message: `Meeting request sent successfully to ${profile.name}`,
       details: {
         profileName: profile.name,
-        requestType: requestType,
+        requestType,
         status: 'pending',
         createdAt: createdAppointment.createdAt,
       },
-    }, 201, context.clientInfo);
+    }, { status: 201 });
 
   } catch (error) {
-    MCPErrorHandler.logError('request_meeting', error as Error, { 
-      profileSlug: body.profileSlug, 
-      requestType: body.requestType 
-    });
-    
-    const errorResponse = MCPErrorHandler.createMeetingError(
-      'Internal server error',
-      MCPErrorCodes.INTERNAL_ERROR
-    );
-    return MCPMiddleware.createSuccessResponse(errorResponse, 500, context.clientInfo);
+    console.error('MCP request-meeting error:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Internal server error'
+    }, { status: 500 });
   }
-});
-
-// GET method for testing purposes (not part of MCP spec)
-export const GET = withMCPMiddleware(
-  {
-    endpoint: 'request_meeting_get',
-    rateLimiter: 'requestMeeting',
-    allowedMethods: ['GET'],
-  },
-  async (request: NextRequest, context) => {
-    const errorResponse = MCPErrorHandler.createMethodNotAllowedError(['POST'], {
-      method: 'POST',
-      requiredFields: ['profileSlug', 'requesterName', 'requesterEmail', 'message', 'requestType'],
-      optionalFields: ['preferredTime'],
-      requestTypes: ['meeting', 'quote', 'appointment'],
-    });
-    return MCPMiddleware.createSuccessResponse(errorResponse, 405, context.clientInfo);
-  }
-);
+}

@@ -4,57 +4,30 @@ import { profiles } from '@/lib/db/schema';
 import { eq, and, ilike, or, sql } from 'drizzle-orm';
 import { ProfileTransformer } from '@/lib/types/profile';
 import { PrivacyService } from '@/lib/services/privacy-service';
-import { MCPErrorHandler, MCPErrorCodes } from '@/lib/utils/mcp-errors';
-import { withMCPMiddleware, MCPMiddleware } from '@/lib/middleware/mcp-middleware';
 
 /**
  * MCP Tool: search_profiles
- * 
+ *
  * Search for people profiles by skills, availability, or keywords
- * This endpoint is designed for AI agent consumption via MCP
+ * Simple HTTP API for the standalone MCP server to call
  */
-export const POST = withMCPMiddleware(
-  {
-    endpoint: 'search_profiles',
-    rateLimiter: 'search',
-    allowedMethods: ['POST'],
-  },
-  async (request: NextRequest, context) => {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { 
-      query = '', 
-      skills = [], 
-      availableFor = [], 
-      limit = 10, 
-      offset = 0 
+    const {
+      query = '',
+      skills = [],
+      availableFor = [],
+      limit = 10,
+      offset = 0
     } = body;
 
-    // Validate search parameters
-    const searchParams = {
-      query: String(query).trim(),
-      skills: Array.isArray(skills) ? skills.map(s => String(s).trim()).filter(Boolean) : [],
-      availableFor: Array.isArray(availableFor) ? availableFor.map(a => String(a).trim()).filter(Boolean) : [],
-      limit: parseInt(String(limit)),
-      offset: parseInt(String(offset)),
-    };
-
-    const validation = MCPErrorHandler.validateSearchParams(searchParams);
-    if (!validation.isValid) {
-      const errorResponse = MCPErrorHandler.createSearchError(
-        `Validation failed: ${validation.errors.join(', ')}`,
-        MCPErrorCodes.VALIDATION_ERROR,
-        { errors: validation.errors }
-      );
-      return NextResponse.json(errorResponse, { status: 400 });
-    }
-
     // Sanitize and apply limits
-    const sanitizedLimit = Math.min(Math.max(searchParams.limit || 10, 1), 50); // Cap at 50 for MCP
-    const sanitizedOffset = Math.max(searchParams.offset || 0, 0);
-    const sanitizedQuery = searchParams.query;
-    const sanitizedSkills = searchParams.skills;
-    const sanitizedAvailableFor = searchParams.availableFor;
+    const sanitizedLimit = Math.min(Math.max(parseInt(String(limit)) || 10, 1), 50);
+    const sanitizedOffset = Math.max(parseInt(String(offset)) || 0, 0);
+    const sanitizedQuery = String(query || '').trim();
+    const sanitizedSkills = Array.isArray(skills) ? skills.map(s => String(s).trim()).filter(Boolean) : [];
+    const sanitizedAvailableFor = Array.isArray(availableFor) ? availableFor.map(a => String(a).trim()).filter(Boolean) : [];
 
     // Build privacy-compliant where conditions
     // CRITICAL: Only include public, active profiles for MCP requests
@@ -131,54 +104,38 @@ export const POST = withMCPMiddleware(
       },
     };
 
-    // Log MCP search for analytics (without exposing sensitive data)
+    // Log MCP search for analytics
     if (process.env.NODE_ENV === 'development') {
-      console.log(`MCP Search executed: query="${sanitizedQuery}", skills=[${sanitizedSkills.join(', ')}], results=${response.profiles.length}`);
+      console.log(`MCP Search: query="${sanitizedQuery}", results=${response.profiles.length}`);
     }
 
-    return MCPMiddleware.createSuccessResponse(response, 200, context.clientInfo);
+    return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    MCPErrorHandler.logError('search_profiles', error as Error, { 
-      query: body.query, 
-      skills: body.skills, 
-      availableFor: body.availableFor 
-    });
-    
-    const errorResponse = MCPErrorHandler.createSearchError(
-      'Failed to search profiles',
-      MCPErrorCodes.SEARCH_ERROR
-    );
-    return MCPMiddleware.createSuccessResponse(errorResponse, 500, context.clientInfo);
+    console.error('MCP search error:', error);
+    return NextResponse.json({
+      error: 'Failed to search profiles',
+      profiles: [],
+      pagination: { total: 0, limit: 0, offset: 0, hasMore: false }
+    }, { status: 500 });
   }
-});
+}
 
-// GET method for testing purposes (not part of MCP spec)
-export const GET = withMCPMiddleware(
-  {
-    endpoint: 'search_profiles_get',
-    rateLimiter: 'search',
-    allowedMethods: ['GET'],
-  },
-  async (request: NextRequest, context) => {
-    const { searchParams } = new URL(request.url);
-    
-    // Convert GET params to POST body format for consistency
-    const body = {
-      query: searchParams.get('query') || searchParams.get('q') || '',
-      skills: searchParams.get('skills')?.split(',').map(s => s.trim()).filter(Boolean) || [],
-      availableFor: searchParams.get('availableFor')?.split(',').map(a => a.trim()).filter(Boolean) || [],
-      limit: parseInt(searchParams.get('limit') || '10'),
-      offset: parseInt(searchParams.get('offset') || '0'),
-    };
+// GET method for testing
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
 
-    // Create a new request with the body for the POST handler
-    const postRequest = new NextRequest(request.url, {
-      method: 'POST',
-      headers: { ...request.headers, 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+  const body = {
+    query: searchParams.get('query') || searchParams.get('q') || '',
+    skills: searchParams.get('skills')?.split(',').map(s => s.trim()).filter(Boolean) || [],
+    availableFor: searchParams.get('availableFor')?.split(',').map(a => a.trim()).filter(Boolean) || [],
+    limit: parseInt(searchParams.get('limit') || '10'),
+    offset: parseInt(searchParams.get('offset') || '0'),
+  };
 
-    // Call the POST handler directly (bypass middleware since we're already in it)
-    return POST(postRequest);
-  }
-);
+  const postRequest = new NextRequest(request.url, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+
+  return POST(postRequest);
+}

@@ -363,9 +363,12 @@ export function withMCPMiddleware(
       return MCPMiddleware.handleOptions(clientInfo);
     }
 
+    // Get request size from Content-Length header (more reliable than cloning)
+    const requestSize = parseInt(request.headers.get('content-length') || '0');
+
     // Apply middleware
     const middlewareResult = await MCPMiddleware.apply(request, config);
-    
+
     if (!middlewareResult.allowed) {
       return middlewareResult.response!;
     }
@@ -384,7 +387,7 @@ export function withMCPMiddleware(
         request.method,
         response,
         middlewareResult.clientInfo,
-        calculateSize(await request.clone().text())
+        requestSize
       );
 
       return response;
@@ -408,7 +411,7 @@ export function withMCPMiddleware(
         request.method,
         response,
         middlewareResult.clientInfo,
-        calculateSize(await request.clone().text()),
+        requestSize,
         'INTERNAL_SERVER_ERROR',
         errorMessage
       );

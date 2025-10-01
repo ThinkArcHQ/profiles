@@ -5,44 +5,23 @@ import { eq } from 'drizzle-orm';
 import { ProfileTransformer } from '@/lib/types/profile';
 import { PrivacyService } from '@/lib/services/privacy-service';
 import { AnalyticsService } from '@/lib/services/analytics-service';
-import { MCPErrorHandler, MCPErrorCodes } from '@/lib/utils/mcp-errors';
-import { withMCPMiddleware, MCPMiddleware } from '@/lib/middleware/mcp-middleware';
 
 /**
  * MCP Tool: get_profile
- * 
+ *
  * Get detailed information about a person by their profile slug
- * This endpoint is designed for AI agent consumption via MCP
+ * Simple HTTP API for the standalone MCP server to call
  */
-export const POST = withMCPMiddleware(
-  {
-    endpoint: 'get_profile',
-    rateLimiter: 'getProfile',
-    allowedMethods: ['POST'],
-  },
-  async (request: NextRequest, context) => {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { profileSlug } = body;
 
-    // Validate required fields
     if (!profileSlug) {
-      const errorResponse = MCPErrorHandler.createProfileError(
-        'Missing required field: profileSlug',
-        MCPErrorCodes.VALIDATION_ERROR
-      );
-      return NextResponse.json(errorResponse, { status: 400 });
-    }
-
-    // Validate slug format
-    const validation = MCPErrorHandler.validateCommonParams({ profileSlug });
-    if (!validation.isValid) {
-      const errorResponse = MCPErrorHandler.createProfileError(
-        `Validation failed: ${validation.errors.join(', ')}`,
-        MCPErrorCodes.INVALID_SLUG_FORMAT,
-        { errors: validation.errors }
-      );
-      return NextResponse.json(errorResponse, { status: 400 });
+      return NextResponse.json({
+        found: false,
+        error: 'Missing required field: profileSlug'
+      }, { status: 400 });
     }
 
     const sanitizedSlug = String(profileSlug).toLowerCase().trim();
@@ -54,21 +33,18 @@ export const POST = withMCPMiddleware(
       .where(eq(profiles.slug, sanitizedSlug));
 
     if (!profile) {
-      const errorResponse = MCPErrorHandler.createProfileError(
-        'Profile not found',
-        MCPErrorCodes.PROFILE_NOT_FOUND
-      );
-      return NextResponse.json(errorResponse, { status: 404 });
+      return NextResponse.json({
+        found: false,
+        error: 'Profile not found'
+      }, { status: 404 });
     }
 
     // Check if profile can be viewed (privacy check)
     if (!PrivacyService.canViewProfile(profile)) {
-      // Return privacy-safe error
-      const errorResponse = MCPErrorHandler.createPrivacySafeError(
-        'Profile is private',
-        'profile'
-      );
-      return NextResponse.json(errorResponse, { status: 404 });
+      return NextResponse.json({
+        found: false,
+        error: 'Profile is private'
+      }, { status: 404 });
     }
 
     // Track AI agent profile view
@@ -78,57 +54,40 @@ export const POST = withMCPMiddleware(
     const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
     const mcpProfile = ProfileTransformer.toMCPProfile(profile, baseUrl);
 
-    // Log successful MCP profile access (without sensitive data)
     if (process.env.NODE_ENV === 'development') {
-      console.log(`MCP Profile accessed: slug=${sanitizedSlug}, name=${profile.name}`);
+      console.log(`MCP Profile accessed: slug=${sanitizedSlug}`);
     }
 
-    // Return MCP-compatible response
-    return MCPMiddleware.createSuccessResponse({
+    return NextResponse.json({
       found: true,
       profile: mcpProfile,
-    }, 200, context.clientInfo);
+    }, { status: 200 });
 
   } catch (error) {
-    MCPErrorHandler.logError('get_profile', error as Error, { 
-      profileSlug: body.profileSlug 
-    });
-    
-    const errorResponse = MCPErrorHandler.createProfileError(
-      'Internal server error',
-      MCPErrorCodes.INTERNAL_ERROR
-    );
-    return MCPMiddleware.createSuccessResponse(errorResponse, 500, context.clientInfo);
+    console.error('MCP get-profile error:', error);
+    return NextResponse.json({
+      found: false,
+      error: 'Internal server error'
+    }, { status: 500 });
   }
-});
+}
 
-// GET method for testing purposes (not part of MCP spec)
-export const GET = withMCPMiddleware(
-  {
-    endpoint: 'get_profile_get',
-    rateLimiter: 'getProfile',
-    allowedMethods: ['GET'],
-  },
-  async (request: NextRequest, context) => {
-    const { searchParams } = new URL(request.url);
-    const profileSlug = searchParams.get('profileSlug') || searchParams.get('slug');
-    
-    if (!profileSlug) {
-      const errorResponse = MCPErrorHandler.createMethodNotAllowedError(['GET', 'POST'], {
-        method: 'GET',
-        parameters: ['profileSlug or slug'],
-        example: '/api/mcp/get-profile?profileSlug=john-doe',
-      });
-      return MCPMiddleware.createSuccessResponse(errorResponse, 400, context.clientInfo);
-    }
+// GET method for testing
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const profileSlug = searchParams.get('profileSlug') || searchParams.get('slug');
 
-    // Create a new request with the body for consistency
-    const postRequest = new NextRequest(request.url, {
-      method: 'POST',
-      headers: { ...request.headers, 'content-type': 'application/json' },
-      body: JSON.stringify({ profileSlug }),
-    });
-
-    return POST(postRequest);
+  if (!profileSlug) {
+    return NextResponse.json({
+      found: false,
+      error: 'Missing profileSlug parameter'
+    }, { status: 400 });
   }
-);
+
+  const postRequest = new NextRequest(request.url, {
+    method: 'POST',
+    body: JSON.stringify({ profileSlug }),
+  });
+
+  return POST(postRequest);
+}
