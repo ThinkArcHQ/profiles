@@ -1,10 +1,10 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/db/connection';
 import { profiles } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://profilebase.ai';
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -12,13 +12,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: baseUrl,
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 1,
+      priority: 1.0,
     },
     {
-      url: `${baseUrl}/profiles`,
+      url: `${baseUrl}/home`,
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 0.9,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/login`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
     {
       url: `${baseUrl}/profile/new`,
@@ -29,21 +35,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // Get all public profiles for dynamic pages
+    // Get all public AND active profiles for indexing
     const publicProfiles = await db
       .select({
         slug: profiles.slug,
         updatedAt: profiles.updatedAt,
       })
       .from(profiles)
-      .where(eq(profiles.isPublic, true))
-      .limit(1000); // Limit to prevent huge sitemaps
+      .where(and(eq(profiles.isPublic, true), eq(profiles.isActive, true)))
+      .limit(50000); // Google supports up to 50,000 URLs per sitemap
 
     const profilePages: MetadataRoute.Sitemap = publicProfiles.map((profile) => ({
       url: `${baseUrl}/${profile.slug}`,
-      lastModified: profile.updatedAt,
+      lastModified: new Date(profile.updatedAt),
       changeFrequency: 'weekly' as const,
-      priority: 0.6,
+      priority: 0.9, // High priority for profile pages
     }));
 
     return [...staticPages, ...profilePages];

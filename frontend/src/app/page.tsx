@@ -7,11 +7,14 @@ import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/db/connection';
 import { profiles } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { 
-  Sparkles, 
-  Users, 
+import {
+  Sparkles,
+  Users,
   ArrowRight,
-  Check
+  Check,
+  Clock,
+  Heart,
+  Zap
 } from 'lucide-react';
 
 export default async function Home() {
@@ -35,10 +38,10 @@ export default async function Home() {
 
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f5f5f0]">
       {/* Navigation */}
       <nav className="absolute top-0 left-0 right-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-6">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
@@ -120,21 +123,21 @@ export default async function Home() {
           <div className="max-w-3xl mx-auto lg:mx-0 py-16 lg:py-24">
             {/* Hero Badge */}
             <div className="inline-flex items-center px-4 py-2 bg-orange-50 rounded-full border border-orange-200 text-orange-700 text-sm font-medium mb-8">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Profile Discovery for AI
+              <Clock className="w-4 h-4 mr-2" />
+              Profiles Meet Availability • AI-Powered Discovery
             </div>
 
             {/* Main Headline */}
             <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Be Discovered by
+              Connect With People
               <span className="block bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 bg-clip-text text-transparent">
-                AI Agents Worldwide
+                At The Right Time
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-              Create your profile and get discovered by AI agents worldwide for connections and opportunities.
+              The world's first open network where profiles meet availability. Be discoverable by AI agents, search by skills, see who's free, and send a meet request — no back-and-forth.
             </p>
 
             {/* CTA Buttons */}
@@ -168,10 +171,10 @@ export default async function Home() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Why people choose ProfileBase:</h3>
               <div className="grid gap-3">
                 {[
-                  "AI-powered profile discovery",
-                  "Connect with like-minded people",
-                  "Global 24/7 visibility",
-                  "Meeting opportunities worldwide"
+                  "See when people are available — not just who they are",
+                  "AI agents discover you 24/7 for opportunities",
+                  "No more back-and-forth scheduling",
+                  "For everyone: students, freelancers, hobbyists, professionals"
                 ].map((feature, index) => (
                   <div key={index} className="flex items-center space-x-3">
                     <Check className="w-5 h-5 text-orange-600 flex-shrink-0" />
@@ -279,7 +282,56 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Features Section - Hidden for cleaner look */}
+      {/* Vision Section */}
+      <div className="bg-white py-20 border-y border-orange-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center px-4 py-2 bg-orange-50 rounded-full border border-orange-200 text-orange-700 text-sm font-medium mb-6">
+              <Heart className="w-4 h-4 mr-2" />
+              Our Vision
+            </div>
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">
+              More Than Just Profiles
+            </h2>
+          </div>
+
+          <div className="prose prose-lg max-w-none">
+            <p className="text-lg text-gray-700 leading-relaxed mb-6">
+              At ProfileBase, we believe that <strong>real connection is more than just knowing who someone is</strong> — it's about knowing when they're available. Social platforms today show endless profiles, but they leave out the most important detail: <strong>time</strong>.
+            </p>
+
+            <p className="text-lg text-gray-700 leading-relaxed mb-6">
+              That's why we're building the world's first open network where <strong>profiles meet availability</strong>. Whether you're a student searching for a study partner, a freelancer looking for clients, a hobbyist hoping to share passions, or simply someone who wants to connect with others, ProfileBase makes it effortless.
+            </p>
+
+            <p className="text-lg text-gray-700 leading-relaxed mb-8">
+              Just search by skills or interests, see who's free when you are, and send a meet request. <strong>No more back-and-forth, no more missed opportunities</strong> — just people, ready to connect, at the right time.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6 mt-12">
+              <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
+                <div className="flex items-center mb-3">
+                  <Sparkles className="w-5 h-5 text-orange-600 mr-2" />
+                  <h3 className="font-semibold text-gray-900">Open Source</h3>
+                </div>
+                <p className="text-gray-700">
+                  Built in the open with community-driven development. No vendor lock-in, full transparency.
+                </p>
+              </div>
+
+              <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
+                <div className="flex items-center mb-3">
+                  <Zap className="w-5 h-5 text-orange-600 mr-2" />
+                  <h3 className="font-semibold text-gray-900">AI-Powered</h3>
+                </div>
+                <p className="text-gray-700">
+                  Be discoverable by AI agents worldwide 24/7. They can find you, check your availability, and send meeting requests.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Profiles Section */}
       <Profiles />

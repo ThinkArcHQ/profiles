@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Script from 'next/script';
 import { PublicProfile } from '@/lib/types/profile';
 import SlugProfileClient from './client';
 
@@ -88,6 +89,69 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default function SlugProfilePage({ params }: { params: Promise<{ slug: string }> }) {
-  return <SlugProfileClient params={params} />;
+async function getProfileData(slug: string) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://profilebase.ai';
+    const response = await fetch(`${baseUrl}/api/profiles/slug/${slug}`, {
+      cache: 'no-store'
+    });
+
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    console.error('Error fetching profile for JSON-LD:', error);
+  }
+  return null;
+}
+
+export default async function SlugProfilePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const profile = await getProfileData(slug);
+
+  // Generate JSON-LD structured data for better SEO
+  const jsonLd = profile ? {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: profile.name,
+    url: profile.profileUrl,
+    description: profile.bio || `Professional profile of ${profile.name}`,
+    email: profile.email,
+    jobTitle: profile.skills.join(', '),
+    knowsAbout: profile.skills,
+    sameAs: [
+      profile.linkedinUrl,
+      ...(profile.otherLinks ? Object.values(profile.otherLinks) : [])
+    ].filter(Boolean),
+    worksFor: {
+      '@type': 'Organization',
+      name: 'ProfileBase',
+      url: 'https://profilebase.ai'
+    },
+    alumniOf: profile.skills.length > 0 ? {
+      '@type': 'EducationalOrganization',
+      name: profile.skills[0]
+    } : undefined,
+    offers: profile.availableFor.map((service: string) => ({
+      '@type': 'Offer',
+      itemOffered: {
+        '@type': 'Service',
+        name: service,
+        description: `${profile.name} is available for ${service}`
+      }
+    }))
+  } : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <Script
+          id="profile-jsonld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <SlugProfileClient params={params} />
+    </>
+  );
 }

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Calendar,
   Home,
-  MessageSquare,
+  Inbox,
   User,
   LogOut,
   Settings
@@ -39,7 +39,7 @@ const menuItems = [
   {
     title: 'Requests',
     url: '/requests',
-    icon: MessageSquare,
+    icon: Inbox,
   },
   {
     title: 'Calendar',
@@ -64,12 +64,7 @@ export function AppSidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="fixed left-0 top-0 h-screen w-16 bg-white border-r border-gray-200 flex flex-col items-center z-50">
-        {/* Logo at top */}
-        <Link href="/home" className="flex items-center justify-center h-16 w-full border-b border-gray-200">
-          <div className="text-2xl font-bold text-orange-600">P</div>
-        </Link>
-
+      <div className="fixed left-0 top-0 h-screen w-16 bg-white/80 backdrop-blur-md border-r border-gray-200 flex flex-col items-center z-50">
         {/* All navigation items - vertically centered */}
         <div className="flex-1 flex flex-col items-center justify-center gap-1 py-4">
           {menuItems.map((item) => {
