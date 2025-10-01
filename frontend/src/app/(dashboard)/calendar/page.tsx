@@ -102,7 +102,7 @@ export default function CalendarPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="h-full flex items-center justify-center bg-[#f5f5f0]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading calendar...</p>
@@ -112,8 +112,8 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="h-screen w-full bg-background overflow-hidden">
-      <FullScreenCalendar data={calendarData} />
+    <div className="h-full w-full bg-background overflow-hidden">
+      <FullScreenCalendar data={calendarData} timezone={Intl.DateTimeFormat().resolvedOptions().timeZone} />
     </div>
   );
 }

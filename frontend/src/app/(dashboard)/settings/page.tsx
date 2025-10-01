@@ -69,6 +69,7 @@ export default function SettingsPage() {
     marketingEmails: false,
     weeklyDigest: true,
   });
+  const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
   const navigationItems = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -93,8 +94,10 @@ export default function SettingsPage() {
       const response = await fetch('/api/profiles/my');
       if (response.ok) {
         const profiles = await response.json();
+        console.log('Fetched profiles:', profiles);
         if (profiles.length > 0) {
           const userProfile = profiles[0];
+          console.log('User profile:', userProfile);
           setProfile(userProfile);
           setFormData({
             name: userProfile.name || '',
@@ -106,6 +109,9 @@ export default function SettingsPage() {
             otherLinks: userProfile.otherLinks || {},
           });
         }
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to fetch profile:', errorData);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -126,19 +132,23 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({
           name: formData.name,
-          email: formData.email,
           bio: formData.bio,
           skills: formData.skills,
-          available_for: formData.availableFor,
-          linkedin_url: formData.linkedinUrl,
-          other_links: formData.otherLinks,
+          availableFor: formData.availableFor,
+          linkedinUrl: formData.linkedinUrl,
+          otherLinks: formData.otherLinks,
         }),
       });
 
       if (response.ok) {
         const updatedProfile = await response.json();
         setProfile(updatedProfile);
-        // Show success message
+        console.log('Profile updated successfully:', updatedProfile);
+        alert('Profile updated successfully!');
+      } else {
+        const errorData = await response.json();
+        console.error('Update failed:', errorData);
+        alert(`Update failed: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -254,7 +264,7 @@ export default function SettingsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
+      <div className="h-full flex items-center justify-center bg-[#f5f5f0]">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-orange-600 text-lg">Loading settings...</p>
@@ -264,9 +274,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex bg-gray-50 ml-16">
+    <div className="h-full flex bg-[#f5f5f0] overflow-hidden">
       {/* Left Sidebar Navigation */}
-      <div className="w-72 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
+      <div className="w-72 flex-shrink-0 overflow-y-auto">
         <div className="p-8 space-y-8">
           {/* Header */}
           <div>
@@ -326,7 +336,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-xl">
-                    <User className="h-6 w-6 text-orange-600" />
+                    <User className="h-6 w-6 text-black" />
                     Profile Information
                   </CardTitle>
                   <CardDescription className="mt-1.5">
@@ -574,7 +584,7 @@ export default function SettingsPage() {
           <Card className="border-gray-200 shadow-sm">
             <CardHeader className="border-b border-gray-100 bg-white pb-6">
               <CardTitle className="flex items-center gap-2 text-xl">
-                <Bell className="h-6 w-6 text-orange-600" />
+                <Bell className="h-6 w-6 text-black" />
                 Notification Preferences
               </CardTitle>
               <CardDescription className="mt-1.5">
@@ -661,7 +671,7 @@ export default function SettingsPage() {
           <Card className="border-gray-200 shadow-sm">
             <CardHeader className="border-b border-gray-100 bg-white pb-6">
               <CardTitle className="flex items-center gap-2 text-xl">
-                <SettingsIcon className="h-6 w-6 text-orange-600" />
+                <SettingsIcon className="h-6 w-6 text-black" />
                 Account Settings
               </CardTitle>
               <CardDescription className="mt-1.5">
@@ -673,19 +683,6 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between p-5 border border-gray-200 rounded-lg bg-white hover:shadow-sm transition-shadow">
                   <div className="flex items-center space-x-4">
                     <div className="p-2 bg-gray-100 rounded-lg">
-                      <Lock className="h-5 w-5 text-gray-600" />
-                    </div>
-                    <div>
-                      <Label className="font-semibold text-gray-900">Authentication</Label>
-                      <p className="text-sm text-gray-600 mt-0.5">Managed by WorkOS</p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">Active</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-5 border border-gray-200 rounded-lg bg-white hover:shadow-sm transition-shadow">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-gray-100 rounded-lg">
                       <User className="h-5 w-5 text-gray-600" />
                     </div>
                     <div>
@@ -694,6 +691,35 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <Badge variant="outline" className="border-gray-300">Free</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-5 border border-gray-200 rounded-lg bg-white hover:shadow-sm transition-shadow">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <Globe className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="font-semibold text-gray-900">Timezone</Label>
+                      <p className="text-sm text-gray-600 mt-0.5">Calendar and meeting times</p>
+                    </div>
+                  </div>
+                  <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm min-w-[200px]"
+                  >
+                    <option value="America/New_York">Eastern Time (ET)</option>
+                    <option value="America/Chicago">Central Time (CT)</option>
+                    <option value="America/Denver">Mountain Time (MT)</option>
+                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                    <option value="Europe/London">London (GMT)</option>
+                    <option value="Europe/Paris">Paris (CET)</option>
+                    <option value="Asia/Tokyo">Tokyo (JST)</option>
+                    <option value="Asia/Shanghai">Shanghai (CST)</option>
+                    <option value="Asia/Kolkata">India (IST)</option>
+                    <option value="Australia/Sydney">Sydney (AEST)</option>
+                    <option value="UTC">UTC</option>
+                  </select>
                 </div>
               </div>
 

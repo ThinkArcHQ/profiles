@@ -100,6 +100,21 @@ export const profileAnalytics = pgTable('profile_analytics', {
   sourceIdx: index('idx_profile_analytics_source').on(table.source),
 }));
 
+// Followers table for social connections
+export const followers = pgTable('followers', {
+  id: serial('id').primaryKey(),
+  followerId: integer('follower_id').references(() => profiles.id, { onDelete: 'cascade' }).notNull(),
+  followingId: integer('following_id').references(() => profiles.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  // Unique constraint to prevent duplicate follows
+  uniqueFollow: unique().on(table.followerId, table.followingId),
+  // Indexes for performance
+  followerIdx: index('idx_followers_follower').on(table.followerId),
+  followingIdx: index('idx_followers_following').on(table.followingId),
+  createdAtIdx: index('idx_followers_created_at').on(table.createdAt),
+}));
+
 // Type exports for TypeScript
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
@@ -107,6 +122,8 @@ export type Appointment = typeof appointments.$inferSelect;
 export type NewAppointment = typeof appointments.$inferInsert;
 export type ProfileAnalytic = typeof profileAnalytics.$inferSelect;
 export type NewProfileAnalytic = typeof profileAnalytics.$inferInsert;
+export type Follower = typeof followers.$inferSelect;
+export type NewFollower = typeof followers.$inferInsert;
 
 // Re-export enhanced types for convenience
 export type {

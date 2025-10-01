@@ -49,7 +49,7 @@ const menuItems = [
   {
     title: 'Profile',
     url: '/settings',
-    icon: User,
+    icon: Settings,
   },
 ];
 
@@ -64,7 +64,7 @@ export function AppSidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="fixed left-0 top-0 h-screen w-16 bg-white/80 backdrop-blur-md border-r border-gray-200 flex flex-col items-center z-50">
+      <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-16 bg-transparent flex flex-col items-center z-40">
         {/* All navigation items - vertically centered */}
         <div className="flex-1 flex flex-col items-center justify-center gap-1 py-4">
           {menuItems.map((item) => {

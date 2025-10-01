@@ -129,12 +129,14 @@ export default function SlugProfileClient() {
   const [newSkill, setNewSkill] = useState('');
   const [newCustomSection, setNewCustomSection] = useState({ title: '', content: '' });
   const [meetingRequest, setMeetingRequest] = useState({
-    requesterName: '',
-    requesterEmail: '',
-    message: '',
-    preferredTime: ''
+    datetime: '',
+    reason: ''
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -155,6 +157,8 @@ export default function SlugProfileClient() {
         const data = await response.json();
         setProfile(data);
         trackProfileView(data.id, 'direct');
+        // Fetch followers data
+        fetchFollowersData(data.id);
       } else if (response.status === 404) {
         setError('Profile not found');
       } else {
@@ -165,6 +169,38 @@ export default function SlugProfileClient() {
       setError('Failed to load profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFollowersData = async (profileId: number) => {
+    try {
+      // For now, we'll use placeholder data since the API endpoints don't exist yet
+      // TODO: Implement actual API endpoints for followers
+      setFollowersCount(Math.floor(Math.random() * 100)); // Placeholder
+      setFollowingCount(Math.floor(Math.random() * 50)); // Placeholder
+      setIsFollowing(false); // Placeholder
+    } catch (error) {
+      console.error('Error fetching followers data:', error);
+    }
+  };
+
+  const handleFollowToggle = async () => {
+    if (!user || !profile || isOwner) return;
+    
+    setFollowLoading(true);
+    try {
+      // TODO: Implement actual follow/unfollow API
+      // const response = await fetch(`/api/profiles/${profile.id}/follow`, {
+      //   method: isFollowing ? 'DELETE' : 'POST',
+      // });
+      
+      // Placeholder logic
+      setIsFollowing(!isFollowing);
+      setFollowersCount(prev => isFollowing ? prev - 1 : prev + 1);
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -310,33 +346,59 @@ export default function SlugProfileClient() {
   };
 
   const submitMeetingRequest = async () => {
-    if (!profile || !meetingRequest.requesterName || !meetingRequest.requesterEmail || !meetingRequest.message) {
+    // Check if user is logged in
+    if (!user) {
+      alert('Please log in to send a meeting request.');
+      window.location.href = '/login';
+      return;
+    }
+
+    // Validate required fields
+    if (!profile || !meetingRequest.datetime || !meetingRequest.reason.trim()) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    // Prepare user name
+    const requesterName = user.firstName && user.lastName 
+      ? `${user.firstName} ${user.lastName}`.trim()
+      : user.firstName || user.lastName || user.email || 'Anonymous User';
+
+    // Validate required API fields
+    if (!profile.id || !requesterName || !user.email || !meetingRequest.reason.trim()) {
+      alert('Missing required information. Please try again.');
       return;
     }
 
     try {
+      const requestData = {
+        profileId: profile.id,
+        requesterName: requesterName,
+        requesterEmail: user.email,
+        message: meetingRequest.reason.trim(),
+        preferredTime: meetingRequest.datetime,
+        requestType: 'meeting'
+      };
+
+      console.log('Sending meeting request:', requestData); // Debug log
+
       const response = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          profileId: profile.id,
-          requesterName: meetingRequest.requesterName,
-          requesterEmail: meetingRequest.requesterEmail,
-          message: meetingRequest.message,
-          preferredTime: meetingRequest.preferredTime || null,
-          requestType: 'meeting'
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (response.ok) {
         setShowMeetingRequest(false);
         setMeetingRequest({
-          requesterName: '',
-          requesterEmail: '',
-          message: '',
-          preferredTime: ''
+          datetime: '',
+          reason: ''
         });
         alert('Meeting request sent successfully!');
+      } else {
+        const errorData = await response.json();
+        console.error('API Error:', errorData); // Debug log
+        alert(`Failed to send request: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to send meeting request:', error);
@@ -346,7 +408,7 @@ export default function SlugProfileClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-[#f5f5f0]">
         <div className="max-w-4xl mx-auto px-6 py-12">
           <div className="animate-pulse space-y-8">
             <div className="flex gap-6">
@@ -365,7 +427,7 @@ export default function SlugProfileClient() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#f5f5f0] flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">Profile Not Found</h2>
           <p className="text-gray-600 mb-6">{error || 'This profile does not exist.'}</p>
@@ -378,9 +440,9 @@ export default function SlugProfileClient() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f5f5f0]">
       {/* Top Navigation */}
-      <div className="border-b border-gray-200 sticky top-0 z-10 bg-white">
+      <div className="border-b border-gray-200 bg-white/80 backdrop-blur-md flex-shrink-0 h-16 z-50 relative sticky top-0">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between gap-6 h-16">
             {/* Logo */}
@@ -437,99 +499,160 @@ export default function SlugProfileClient() {
           {/* Left Sidebar - Sticky Profile Card */}
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-24 space-y-6">
-              {/* Profile Card */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                <div className="flex flex-col items-center text-center mb-6">
-                  <Avatar className="h-32 w-32 mb-4">
-                    <AvatarFallback className="text-3xl font-semibold bg-gray-100 text-gray-700">
-                      {getInitials(profile.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h1 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h1>
-                  {profile.headline ? (
-                    <p className="text-base text-gray-600 mb-3">{profile.headline}</p>
-                  ) : isOwner ? (
-                    <p className="text-sm text-gray-400 italic mb-3">Add your professional headline</p>
-                  ) : null}
+              {/* Main Profile Card - Matching Home Page Design */}
+              <div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                {/* Card Header */}
+                <div className="p-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    <Avatar className="h-16 w-16 flex-shrink-0 ring-2 ring-gray-100">
+                      <AvatarFallback className="text-xl font-semibold bg-gradient-to-br from-orange-400 to-orange-600 text-white">
+                        {getInitials(profile.name)}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  <div className="flex flex-col gap-2 text-sm text-gray-500 w-full">
-                    {profile.location ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        {profile.location}
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-xl font-bold text-gray-900 mb-1 truncate">{profile.name}</h1>
+                      {profile.headline ? (
+                        <p className="text-sm text-gray-600 line-clamp-2 font-medium mb-2">{profile.headline}</p>
+                      ) : isOwner ? (
+                        <p className="text-sm text-gray-400 italic mb-2">Add your professional headline</p>
+                      ) : null}
+
+                      {/* Location */}
+                      {profile.location ? (
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{profile.location}</span>
+                        </div>
+                      ) : isOwner ? (
+                        <div className="flex items-center gap-1.5 text-xs text-gray-400 italic mb-2">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span>Add location</span>
+                        </div>
+                      ) : null}
+
+                      {/* Join Date */}
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Calendar className="h-3 w-3 flex-shrink-0" />
+                        <span>Joined {formatDate(profile.createdAt)}</span>
                       </div>
-                    ) : isOwner ? (
-                      <div className="flex items-center justify-center gap-2 text-gray-400 italic">
-                        <MapPin className="h-4 w-4" />
-                        Add location
-                      </div>
-                    ) : null}
-                    <div className="flex items-center justify-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Joined {formatDate(profile.createdAt)}
                     </div>
+
+                    {isOwner && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-shrink-0"
+                        onClick={() => {
+                          setFormData({
+                            name: profile.name,
+                            headline: profile.headline,
+                            location: profile.location
+                          });
+                          setEditBasicInfo(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
 
-                  {isOwner && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-4 w-full"
-                      onClick={() => {
-                        setFormData({
-                          name: profile.name,
-                          headline: profile.headline,
-                          location: profile.location
-                        });
-                        setEditBasicInfo(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit Profile
-                    </Button>
+                  {/* Bio Preview */}
+                  {profile.bio && (
+                    <p className="text-sm text-gray-700 line-clamp-3 mb-4 leading-relaxed">
+                      {profile.bio}
+                    </p>
                   )}
-                </div>
 
-                <Separator className="mb-6" />
-
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  {!isOwner && (
-                    <Button
-                      className="w-full bg-orange-600 hover:bg-orange-700"
-                      onClick={() => setShowMeetingRequest(true)}
-                    >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Request Meeting
-                    </Button>
-                  )}
-                  <Button variant="outline" className="w-full" onClick={handleCopyProfile}>
-                    {copied ? (
+                  {/* Followers/Following Stats */}
+                  <div className="flex items-center gap-4 mb-4 text-sm">
+                    <button className="flex items-center gap-1 hover:text-orange-600 transition-colors">
+                      <span className="font-semibold text-gray-900">{followersCount}</span>
+                      <span className="text-gray-600">followers</span>
+                    </button>
+                    <button className="flex items-center gap-1 hover:text-orange-600 transition-colors">
+                      <span className="font-semibold text-gray-900">{followingCount}</span>
+                      <span className="text-gray-600">following</span>
+                    </button>
+                    {profile.skills.length > 0 && (
                       <>
-                        <Check className="h-4 w-4 mr-2" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Share2 className="h-4 w-4 mr-2" />
-                        Share Profile
+                        <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+                        <div className="flex items-center gap-1">
+                          <span className="font-semibold text-gray-900">{profile.skills.length}</span>
+                          <span className="text-gray-600">skills</span>
+                        </div>
                       </>
                     )}
-                  </Button>
-                  {profile.email && !isOwner && (
-                    <Button variant="outline" className="w-full">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Email
-                    </Button>
-                  )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    {!isOwner && user && (
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/30"
+                          onClick={() => setShowMeetingRequest(true)}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Request
+                        </Button>
+                        <Button
+                          variant={isFollowing ? "outline" : "default"}
+                          className={isFollowing ? "flex-1" : "flex-1 bg-gray-900 hover:bg-gray-800"}
+                          onClick={handleFollowToggle}
+                          disabled={followLoading}
+                        >
+                          {followLoading ? (
+                            <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          ) : isFollowing ? (
+                            <>Following</>
+                          ) : (
+                            <>Follow</>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                    {!isOwner && !user && (
+                      <Link href="/login">
+                        <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/30">
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Login to Request Meeting
+                        </Button>
+                      </Link>
+                    )}
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1" onClick={handleCopyProfile}>
+                        {copied ? (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="h-4 w-4 mr-2" />
+                            Share
+                          </>
+                        )}
+                      </Button>
+                      {profile.email && !isOwner && (
+                        <Button variant="outline" className="flex-1">
+                          <Mail className="h-4 w-4 mr-2" />
+                          Email
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
+
+                {/* Hover gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-orange-50/0 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               </div>
 
               {/* Links Card */}
               {((profile.linkedinUrl || (profile.otherLinks && Object.keys(profile.otherLinks).length > 0)) || isOwner) && (
-                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900">Links</h3>
+                    <h3 className="font-semibold text-gray-900 text-base">Links</h3>
                     {isOwner && (
                       <Button variant="ghost" size="sm" onClick={() => setEditLinks(true)}>
                         <Pencil className="h-4 w-4" />
@@ -543,11 +666,11 @@ export default function SlugProfileClient() {
                           href={profile.linkedinUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-3 text-sm text-gray-700 hover:text-gray-900"
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
                         >
                           <Linkedin className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                          <span className="flex-1 truncate">LinkedIn</span>
-                          <ExternalLink className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                          <span className="flex-1 truncate text-sm text-gray-700 group-hover:text-gray-900">LinkedIn</span>
+                          <ExternalLink className="h-3 w-3 text-gray-400 flex-shrink-0 group-hover:text-gray-600" />
                         </a>
                       )}
                       {profile.otherLinks && Object.entries(profile.otherLinks).map(([key, url]: [string, any], index) => (
@@ -556,17 +679,17 @@ export default function SlugProfileClient() {
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-3 text-sm text-gray-700 hover:text-gray-900"
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
                         >
                           <Globe className="h-4 w-4 text-gray-600 flex-shrink-0" />
-                          <span className="flex-1 truncate">{key}</span>
-                          <ExternalLink className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                          <span className="flex-1 truncate text-sm text-gray-700 group-hover:text-gray-900">{key}</span>
+                          <ExternalLink className="h-3 w-3 text-gray-400 flex-shrink-0 group-hover:text-gray-600" />
                         </a>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-sm">
-                      <p className="text-gray-500 italic mb-3">No links added yet</p>
+                    <div className="text-center py-4">
+                      <p className="text-gray-500 italic text-sm mb-3">No links added yet</p>
                       {isOwner && (
                         <Button size="sm" variant="outline" className="w-full" onClick={() => setEditLinks(true)}>
                           <Plus className="h-4 w-4 mr-2" />
@@ -579,9 +702,9 @@ export default function SlugProfileClient() {
               )}
 
               {/* Skills Card */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">Skills</h3>
+                  <h3 className="font-semibold text-gray-900 text-base">Skills & Expertise</h3>
                   {isOwner && (
                     <Button variant="ghost" size="sm" onClick={() => setEditSkills(true)}>
                       <Plus className="h-4 w-4" />
@@ -594,13 +717,13 @@ export default function SlugProfileClient() {
                       <Badge
                         key={index}
                         variant="secondary"
-                        className="px-2 py-1 text-xs bg-gray-100 text-gray-700 hover:bg-gray-200 font-normal"
+                        className="px-3 py-1.5 text-xs bg-gray-50 text-gray-700 hover:bg-gray-100 font-medium border border-gray-200 rounded-full transition-colors"
                       >
                         {skill}
                         {isOwner && (
                           <button
                             onClick={() => removeSkill(skill)}
-                            className="ml-1.5 hover:text-gray-900"
+                            className="ml-2 hover:text-red-600 transition-colors"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -609,8 +732,8 @@ export default function SlugProfileClient() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-sm">
-                    <p className="text-gray-500 italic mb-3">
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 italic text-sm mb-3">
                       {isOwner ? "Showcase your expertise" : "No skills added yet"}
                     </p>
                     {isOwner && (
@@ -1358,62 +1481,82 @@ export default function SlugProfileClient() {
 
       {/* Meeting Request Dialog */}
       <Dialog open={showMeetingRequest} onOpenChange={setShowMeetingRequest}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Request Meeting with {profile.name}</DialogTitle>
-            <DialogDescription>
-              Send a meeting request. {profile.name} will be notified and can accept, decline, or propose a different time.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="req-name">Your Name *</Label>
-              <Input
-                id="req-name"
-                placeholder="Enter your full name"
-                value={meetingRequest.requesterName}
-                onChange={(e) => setMeetingRequest({ ...meetingRequest, requesterName: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="req-email">Your Email *</Label>
-              <Input
-                id="req-email"
-                type="email"
-                placeholder="your.email@example.com"
-                value={meetingRequest.requesterEmail}
-                onChange={(e) => setMeetingRequest({ ...meetingRequest, requesterEmail: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="req-time">Preferred Date & Time (Optional)</Label>
-              <Input
-                id="req-time"
-                type="datetime-local"
-                value={meetingRequest.preferredTime}
-                onChange={(e) => setMeetingRequest({ ...meetingRequest, preferredTime: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="req-message">Message *</Label>
-              <Textarea
-                id="req-message"
-                rows={5}
-                placeholder="Introduce yourself and explain why you'd like to meet..."
-                value={meetingRequest.message}
-                onChange={(e) => setMeetingRequest({ ...meetingRequest, message: e.target.value })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowMeetingRequest(false)}>Cancel</Button>
-            <Button
-              onClick={submitMeetingRequest}
-              disabled={!meetingRequest.requesterName || !meetingRequest.requesterEmail || !meetingRequest.message}
-            >
-              Send Request
-            </Button>
-          </DialogFooter>
+        <DialogContent className="max-w-md">
+          {user ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Request Meeting with {profile.name}</DialogTitle>
+                <DialogDescription>
+                  Choose your preferred time and let {profile.name} know why you'd like to meet.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                {/* Show user info for confirmation */}
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Requesting as:</p>
+                  <p className="font-medium text-gray-900">
+                    {user.firstName && user.lastName 
+                      ? `${user.firstName} ${user.lastName}`
+                      : user.firstName || user.lastName || user.email
+                    }
+                  </p>
+                  <p className="text-sm text-gray-600">{user.email}</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="req-datetime">Preferred Date & Time *</Label>
+                  <Input
+                    id="req-datetime"
+                    type="datetime-local"
+                    value={meetingRequest.datetime}
+                    onChange={(e) => setMeetingRequest({ ...meetingRequest, datetime: e.target.value })}
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="req-reason">Reason for Meeting *</Label>
+                  <Textarea
+                    id="req-reason"
+                    rows={4}
+                    placeholder="Brief reason for the meeting (e.g., discuss collaboration, seek advice, etc.)"
+                    value={meetingRequest.reason}
+                    onChange={(e) => setMeetingRequest({ ...meetingRequest, reason: e.target.value })}
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {meetingRequest.reason.length}/500 characters
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowMeetingRequest(false)}>Cancel</Button>
+                <Button
+                  onClick={submitMeetingRequest}
+                  disabled={!meetingRequest.datetime || !meetingRequest.reason.trim()}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  Send Request
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Login Required</DialogTitle>
+                <DialogDescription>
+                  You need to be logged in to send a meeting request to {profile.name}.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowMeetingRequest(false)}>Cancel</Button>
+                <Link href="/login">
+                  <Button className="bg-orange-600 hover:bg-orange-700">
+                    Login to Continue
+                  </Button>
+                </Link>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

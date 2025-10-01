@@ -254,27 +254,23 @@ export default function RequestsPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <MessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4 animate-pulse" />
-            <p className="text-gray-600">Loading requests...</p>
-          </div>
+      <div className="h-full flex items-center justify-center bg-[#f5f5f0]">
+        <div className="text-center">
+          <MessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4 animate-pulse" />
+          <p className="text-gray-600">Loading requests...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="h-full overflow-hidden bg-[#f5f5f0]">
+      <div className="h-full overflow-y-auto scrollbar-hide">
+        <div className="px-6 py-6 space-y-6">
       {/* Header with Stats */}
       <div className="space-y-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <MessageSquare className="h-8 w-8" />
-            Requests
-          </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600">
             Manage your incoming and outgoing meeting requests
           </p>
         </div>
@@ -655,6 +651,8 @@ export default function RequestsPage() {
           isLoading={actionLoading === showCounterProposal}
         />
       )}
+        </div>
+      </div>
     </div>
   )
 }

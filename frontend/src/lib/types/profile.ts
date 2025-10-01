@@ -20,10 +20,15 @@ export interface PublicProfile {
   slug: string;
   name: string;
   bio?: string | null;
+  headline?: string | null;
+  location?: string | null;
   skills: string[];
   availableFor: string[];
   linkedinUrl?: string | null;
   otherLinks: Record<string, string>;
+  experience?: any[];
+  education?: any[];
+  projects?: any[];
   profileUrl: string;
   createdAt: Date; // Keep for display purposes
   // Note: email, workosUserId, and other sensitive fields are intentionally excluded
@@ -169,10 +174,15 @@ export class ProfileTransformer {
       slug: profile.slug,
       name: profile.name,
       bio: profile.bio,
+      headline: profile.headline,
+      location: profile.location,
       skills: profile.skills || [],
       availableFor: profile.availableFor || [],
       linkedinUrl: profile.linkedinUrl,
       otherLinks: (profile.otherLinks as Record<string, string>) || {},
+      experience: (profile.experience as any[]) || [],
+      education: (profile.education as any[]) || [],
+      projects: (profile.projects as any[]) || [],
       profileUrl,
       createdAt: profile.createdAt,
     };
