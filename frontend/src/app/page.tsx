@@ -337,7 +337,7 @@ export default async function Home() {
       <Profiles />
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-orange-100">
+      <footer className="bg-[#0a0a0a] border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid md:grid-cols-4 gap-8">
             {/* Brand */}
@@ -345,50 +345,63 @@ export default async function Home() {
               <div className="flex items-center space-x-4 mb-4">
                 <div>
                   <h3 className="text-2xl font-bold">
-                    <span className="text-black">Profile</span>
+                    <span className="text-white">Profile</span>
                     <span className="text-orange-600">Base</span>
                   </h3>
                 </div>
               </div>
-              <p className="text-gray-600 mb-6 leading-relaxed max-w-md">
-                Connecting people with AI agents worldwide.
+              <p className="text-gray-400 mb-6 leading-relaxed max-w-md">
+                Your profile, your choice. Connecting people with AI agents worldwide.
                 Register to make yourself discoverable by AI agents and control what they know about you.
               </p>
             </div>
 
             {/* Links */}
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Platform</h4>
+              <h4 className="font-semibold text-white mb-4">Platform</h4>
               <ul className="space-y-2">
-                <li><Link href="/home" className="text-gray-600 hover:text-orange-600 transition-colors">Home</Link></li>
-                <li><Link href="/profile/new" className="text-gray-600 hover:text-orange-600 transition-colors">Create Profile</Link></li>
-                <li><Link href="/login" className="text-gray-600 hover:text-orange-600 transition-colors">Sign In</Link></li>
-                <li><Link href="/requests" className="text-gray-600 hover:text-orange-600 transition-colors">Requests</Link></li>
+                <li><Link href="/home" className="text-gray-400 hover:text-orange-600 transition-colors">Home</Link></li>
+                <li><Link href="/profile/new" className="text-gray-400 hover:text-orange-600 transition-colors">Create Profile</Link></li>
+                {user && userProfile && (
+                  <li><Link href={`/${userProfile.slug}`} className="text-gray-400 hover:text-orange-600 transition-colors">Your Profile</Link></li>
+                )}
+                <li><Link href="/requests" className="text-gray-400 hover:text-orange-600 transition-colors">Requests</Link></li>
+                <li><Link href="/login" className="text-gray-400 hover:text-orange-600 transition-colors">Sign In</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Support</h4>
+              <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-600 hover:text-orange-600 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-orange-600 transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-orange-600 transition-colors">Contact Us</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Contact Us</a></li>
               </ul>
             </div>
           </div>
 
-          <Separator className="my-8" />
+          <Separator className="my-8 bg-gray-800" />
 
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm">
               © 2025 ProfileBase. All rights reserved.
             </p>
-            <p className="text-gray-400 text-sm mt-4 md:mt-0">
+            <p className="text-gray-600 text-sm mt-4 md:mt-0">
               Connecting people with AI worldwide.
             </p>
           </div>
         </div>
       </footer>
+
+      {/* Large Branding Section */}
+      <div className="bg-[#0a0a0a] py-16 overflow-hidden">
+        <div className="text-center">
+          <h2 className="text-[8rem] sm:text-[10rem] md:text-[12rem] lg:text-[14rem] xl:text-[16rem] font-bold leading-none tracking-tighter select-none whitespace-nowrap">
+            <span className="text-white/20">Profile</span>
+            <span className="text-orange-600/40">Base</span>
+          </h2>
+        </div>
+      </div>
     </div>
   );
 }

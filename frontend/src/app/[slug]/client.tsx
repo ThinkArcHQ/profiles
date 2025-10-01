@@ -574,15 +574,6 @@ export default function SlugProfileClient() {
                       <span className="font-semibold text-gray-900">{followingCount}</span>
                       <span className="text-gray-600">following</span>
                     </button>
-                    {profile.skills.length > 0 && (
-                      <>
-                        <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
-                        <div className="flex items-center gap-1">
-                          <span className="font-semibold text-gray-900">{profile.skills.length}</span>
-                          <span className="text-gray-600">skills</span>
-                        </div>
-                      </>
-                    )}
                   </div>
 
                   {/* Action Buttons */}
