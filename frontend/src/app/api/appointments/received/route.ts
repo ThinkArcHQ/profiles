@@ -21,6 +21,7 @@ export async function GET() {
         requesterEmail: appointments.requesterEmail,
         message: appointments.message,
         preferredTime: appointments.preferredTime,
+        proposedTime: appointments.proposedTime,
         requestType: appointments.requestType,
         status: appointments.status,
         createdAt: appointments.createdAt,

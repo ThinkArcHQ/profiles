@@ -26,6 +26,13 @@ import {
   ChevronRightIcon,
   PlusCircleIcon,
   SearchIcon,
+  X,
+  Calendar,
+  User,
+  Mail,
+  Clock,
+  MessageSquare,
+  ArrowRight,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -58,6 +65,22 @@ interface FullScreenCalendarProps {
   timezone?: string;
 }
 
+interface MeetingDetails {
+  id: number;
+  requesterName: string;
+  requesterEmail: string;
+  message: string;
+  preferredTime?: string;
+  proposedTime?: string;
+  requestType: string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+  counterMessage?: string;
+  responseMessage?: string;
+  profileName?: string;
+}
+
 const colStartClasses = [
   "",
   "col-start-2",
@@ -72,6 +95,9 @@ export function FullScreenCalendar({
   data,
   timezone = "America/New_York",
 }: FullScreenCalendarProps) {
+  console.log('FullScreenCalendar received data:', data);
+  console.log('Data length:', data?.length);
+
   const today = startOfToday();
   const [selectedDay, setSelectedDay] = React.useState(today);
   const [currentMonth, setCurrentMonth] = React.useState(
@@ -80,6 +106,9 @@ export function FullScreenCalendar({
   const [isEventDialogOpen, setIsEventDialogOpen] = React.useState(false);
   const [viewFilter, setViewFilter] = React.useState("today");
   const [currentTime, setCurrentTime] = React.useState(new Date());
+  const [selectedMeetingId, setSelectedMeetingId] = React.useState<number | null>(null);
+  const [meetingDetails, setMeetingDetails] = React.useState<MeetingDetails | null>(null);
+  const [loadingDetails, setLoadingDetails] = React.useState(false);
   const firstDayCurrentMonth = parse(currentMonth, "MMM-yyyy", new Date());
 
   // Update current time every second
@@ -100,26 +129,45 @@ export function FullScreenCalendar({
 
   // Filter events based on selected view
   const getFilteredEvents = React.useMemo(() => {
-    if (!data) return [];
+    console.log('getFilteredEvents running with viewFilter:', viewFilter);
+    console.log('Data in getFilteredEvents:', data);
+
+    if (!data) {
+      console.log('No data - returning empty array');
+      return [];
+    }
 
     const now = new Date();
+    console.log('Current date/time:', now);
 
+    let filtered;
     switch (viewFilter) {
       case "today":
-        return data.filter((item) => isSameDay(item.day, now));
+        filtered = data.filter((item) => {
+          const isSame = isSameDay(item.day, now);
+          console.log('Checking if', item.day, 'is same as today:', isSame);
+          return isSame;
+        });
+        console.log('Today filtered events:', filtered);
+        return filtered;
       case "week":
         const weekStart = startOfWeekFn(now);
         const weekEnd = endOfWeekFn(now);
-        return data.filter(
+        filtered = data.filter(
           (item) => item.day >= weekStart && item.day <= weekEnd
         );
+        console.log('Week filtered events:', filtered);
+        return filtered;
       case "month":
         const monthStart = startOfMonth(now);
         const monthEnd = endOfMonthFn(now);
-        return data.filter(
+        filtered = data.filter(
           (item) => item.day >= monthStart && item.day <= monthEnd
         );
+        console.log('Month filtered events:', filtered);
+        return filtered;
       default:
+        console.log('Default - returning all data');
         return data;
     }
   }, [data, viewFilter]);
@@ -210,8 +258,66 @@ export function FullScreenCalendar({
     alert("Event created successfully!");
   };
 
+  const handleEventClick = async (eventId: number) => {
+    setSelectedMeetingId(eventId);
+    setLoadingDetails(true);
+
+    try {
+      // Fetch full meeting details from both received and sent endpoints
+      const [receivedRes, sentRes] = await Promise.all([
+        fetch('/api/appointments/received'),
+        fetch('/api/appointments/sent')
+      ]);
+
+      if (receivedRes.ok || sentRes.ok) {
+        const received = receivedRes.ok ? await receivedRes.json() : [];
+        const sent = sentRes.ok ? await sentRes.json() : [];
+        const allMeetings = [...received, ...sent];
+
+        const meeting = allMeetings.find((m: any) => m.id === eventId);
+        if (meeting) {
+          setMeetingDetails(meeting);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching meeting details:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const closeMeetingDetails = () => {
+    setSelectedMeetingId(null);
+    setMeetingDetails(null);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'accepted': return 'bg-green-100 text-green-800 border-green-300';
+      case 'rejected': return 'bg-red-100 text-red-800 border-red-300';
+      case 'counter_proposed': return 'bg-purple-100 text-purple-800 border-purple-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex h-full w-full">
+      {/* Main Calendar Area */}
+      <div className={cn(
+        "flex flex-col flex-1 transition-all duration-300",
+        selectedMeetingId ? "mr-96" : ""
+      )}>
       {/* Calendar Header */}
       <div className="flex flex-col space-y-4 p-4 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none border-b bg-background">
         <div className="flex flex-auto">
@@ -372,7 +478,8 @@ export function FullScreenCalendar({
                           {hourEvents.map((event) => (
                             <div
                               key={event.id}
-                              className="mb-1 p-2 bg-orange-100 border-l-4 border-orange-500 rounded-r text-sm"
+                              onClick={() => handleEventClick(event.id)}
+                              className="mb-1 p-2 bg-orange-100 border-l-4 border-orange-500 rounded-r text-sm cursor-pointer hover:bg-orange-200 hover:shadow-md transition-all"
                             >
                               <div className="font-medium text-orange-900">
                                 {event.name}
@@ -391,50 +498,97 @@ export function FullScreenCalendar({
             </div>
           </div>
         ) : viewFilter === "week" ? (
-          // Week View - Show current week
-          <div className="flex flex-1 flex-col">
-            <div className="grid grid-cols-7 gap-px border-b bg-muted text-center text-xs font-medium leading-6 text-muted-foreground">
-              <div className="bg-background py-2">Sun</div>
-              <div className="bg-background py-2">Mon</div>
-              <div className="bg-background py-2">Tue</div>
-              <div className="bg-background py-2">Wed</div>
-              <div className="bg-background py-2">Thu</div>
-              <div className="bg-background py-2">Fri</div>
-              <div className="bg-background py-2">Sat</div>
-            </div>
-            <div className="flex flex-1 bg-muted">
-              <div className="grid flex-1 grid-cols-7 gap-px">
-                {currentWeekDays.map((day) => (
-                  <div
-                    key={day.toString()}
-                    className="group relative min-h-0 bg-background px-3 py-2 focus-within:z-10"
-                  >
-                    <time
-                      dateTime={format(day, "yyyy-MM-dd")}
-                      className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium",
-                        isToday(day) && "bg-primary text-primary-foreground",
-                        !isToday(day) && "text-foreground"
-                      )}
-                    >
-                      {format(day, "d")}
-                    </time>
-                    <div className="mt-2 space-y-1">
-                      {getFilteredEvents
-                        .filter((event) => isSameDay(event.day, day))
-                        .map((eventData) =>
-                          eventData.events.slice(0, 3).map((event) => (
-                            <div
-                              key={event.id}
-                              className="text-xs p-1 bg-primary/10 rounded text-primary truncate"
-                            >
-                              {event.name}
-                            </div>
-                          ))
-                        )}
-                    </div>
+          // Week View - Vertical timeline for each day
+          <div className="flex flex-1 flex-col overflow-hidden">
+            {/* Week header */}
+            <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-px border-b bg-muted text-center text-xs font-medium leading-6 text-muted-foreground flex-shrink-0">
+              <div className="bg-background py-2"></div>
+              {currentWeekDays.map((day) => (
+                <div key={day.toString()} className="bg-background py-2">
+                  <div className={cn(
+                    "font-semibold",
+                    isToday(day) && "text-orange-600"
+                  )}>
+                    {format(day, "EEE")}
                   </div>
-                ))}
+                  <div className={cn(
+                    "text-lg",
+                    isToday(day) && "text-orange-600 font-bold"
+                  )}>
+                    {format(day, "d")}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Timeline grid */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="grid grid-cols-[60px_repeat(7,1fr)] gap-px bg-muted">
+                {/* Generate time slots (business hours: 8 AM - 8 PM) */}
+                {Array.from({ length: 13 }, (_, index) => {
+                  const hour = index + 8; // Start at 8 AM
+
+                  return (
+                    <React.Fragment key={hour}>
+                      {/* Time label */}
+                      <div className="bg-background flex items-start justify-end pr-2 py-1 text-xs text-muted-foreground border-r">
+                        {hour === 12 ? "12 PM" : hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
+                      </div>
+
+                      {/* Day columns */}
+                      {currentWeekDays.map((day) => {
+                        // Find events for this hour on this day
+                        const dayEvents = getFilteredEvents
+                          .filter((event) => isSameDay(event.day, day))
+                          .flatMap((eventData) =>
+                            eventData.events.filter((event) => {
+                              if (event.time === 'Time TBD') return hour === 8; // Show TBD at first slot
+                              const eventHour = new Date(event.datetime).getHours();
+                              return eventHour === hour;
+                            })
+                          );
+
+                        return (
+                          <div
+                            key={`${day.toString()}-${hour}`}
+                            className={cn(
+                              "bg-background relative border-b border-gray-100 min-h-[40px] p-1",
+                              isToday(day) && "bg-orange-50/30"
+                            )}
+                          >
+                            {/* Current time indicator */}
+                            {isToday(day) && new Date().getHours() === hour && (
+                              <div
+                                className="absolute left-0 right-0 h-0.5 bg-orange-500 z-10"
+                                style={{
+                                  top: `${(new Date().getMinutes() / 60) * 40}px`,
+                                }}
+                              >
+                                <div className="absolute -left-1 -top-1 w-2 h-2 bg-orange-500 rounded-full"></div>
+                              </div>
+                            )}
+
+                            {/* Events */}
+                            {dayEvents.map((event) => (
+                              <div
+                                key={event.id}
+                                onClick={() => handleEventClick(event.id)}
+                                className="mb-0.5 p-1 bg-orange-100 border-l-2 border-orange-500 rounded-r text-xs cursor-pointer hover:bg-orange-200 hover:shadow-sm transition-all"
+                              >
+                                <div className="font-medium text-orange-900 truncate">
+                                  {event.name}
+                                </div>
+                                <div className="text-[10px] text-orange-700">
+                                  {event.time}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -491,7 +645,8 @@ export function FullScreenCalendar({
                           eventData.events.slice(0, 2).map((event) => (
                             <div
                               key={event.id}
-                              className="text-xs p-1 mb-1 bg-orange-100 border-l-2 border-orange-500 rounded-r text-orange-900 truncate"
+                              onClick={() => handleEventClick(event.id)}
+                              className="text-xs p-1 mb-1 bg-orange-100 border-l-2 border-orange-500 rounded-r text-orange-900 truncate cursor-pointer hover:bg-orange-200 hover:shadow-sm transition-all"
                             >
                               {event.name}
                             </div>
@@ -520,6 +675,165 @@ export function FullScreenCalendar({
         onClose={() => setIsEventDialogOpen(false)}
         onSubmit={handleCreateEvent}
       />
+      </div>
+
+      {/* Meeting Details Side Panel */}
+      {selectedMeetingId && (
+        <div className="fixed right-0 top-0 bottom-0 w-96 bg-white border-l shadow-2xl z-50 overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10">
+            <h2 className="text-lg font-semibold">Meeting Details</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={closeMeetingDetails}
+              className="hover:bg-gray-100"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {loadingDetails ? (
+            <div className="p-8 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+            </div>
+          ) : meetingDetails ? (
+            <div className="p-6 space-y-6">
+              {/* Status Badge */}
+              <div className="flex items-center justify-between">
+                <span className={cn(
+                  "px-3 py-1 rounded-full text-sm font-medium border",
+                  getStatusColor(meetingDetails.status)
+                )}>
+                  {meetingDetails.status.replace('_', ' ').charAt(0).toUpperCase() +
+                   meetingDetails.status.replace('_', ' ').slice(1)}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {meetingDetails.requestType}
+                </span>
+              </div>
+
+              {/* Contact Info */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <User className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-xs text-gray-500">Contact</div>
+                    <div className="font-medium">
+                      {meetingDetails.requesterName || meetingDetails.profileName}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Mail className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-xs text-gray-500">Email</div>
+                    <div className="text-sm break-all">
+                      {meetingDetails.requesterEmail || 'N/A'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Meeting Times */}
+              {meetingDetails.preferredTime && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="text-xs font-medium text-blue-600 mb-1">Preferred Time</div>
+                      <div className="text-sm text-gray-900">{formatDate(meetingDetails.preferredTime)}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {meetingDetails.proposedTime && (
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="flex items-start gap-3">
+                    <ArrowRight className="h-5 w-5 text-purple-600 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="text-xs font-medium text-purple-600 mb-1">Counter Proposal</div>
+                      <div className="text-sm text-gray-900">{formatDate(meetingDetails.proposedTime)}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!meetingDetails.preferredTime && !meetingDetails.proposedTime && (
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-gray-600 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="text-xs font-medium text-gray-600 mb-1">Meeting Time</div>
+                      <div className="text-sm text-gray-900">Time To Be Determined</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Message */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>Message</span>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap">{meetingDetails.message}</p>
+                </div>
+              </div>
+
+              {/* Counter Message */}
+              {meetingDetails.counterMessage && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-purple-700">
+                    <ArrowRight className="h-4 w-4" />
+                    <span>Counter Proposal Message</span>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <p className="text-sm text-gray-900 whitespace-pre-wrap">{meetingDetails.counterMessage}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Response Message */}
+              {meetingDetails.responseMessage && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Response</span>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <p className="text-sm text-gray-900 whitespace-pre-wrap">{meetingDetails.responseMessage}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Timestamps */}
+              <div className="pt-4 border-t space-y-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3 w-3" />
+                  <span>Created: {formatDate(meetingDetails.createdAt)}</span>
+                </div>
+                {meetingDetails.updatedAt && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3" />
+                    <span>Updated: {formatDate(meetingDetails.updatedAt)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-gray-500">
+              <p>Meeting details not found</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

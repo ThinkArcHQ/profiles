@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@workos-inc/authkit-nextjs/components';
 import { FullScreenCalendar } from '@/components/ui/fullscreen-calendar';
 
 interface AppointmentRequest {
-  id: string;
-  profile_id: string;
-  requester_name: string;
-  requester_email: string;
+  id: number;
+  profileId: string;
+  requesterName: string;
+  requesterEmail: string;
   message: string;
-  preferred_time?: string;
-  request_type: string;
+  preferredTime?: string;
+  proposedTime?: string;
+  requestType: string;
   status: string;
-  created_at: string;
+  createdAt: string;
   profileName?: string;
   profileEmail?: string;
 }
@@ -43,20 +44,32 @@ export default function CalendarPage() {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      
+
+      console.log('=== Fetching Appointments ===');
+
       // Fetch received appointments
       const receivedResponse = await fetch('/api/appointments/received');
+      console.log('Received response status:', receivedResponse.status);
       if (receivedResponse.ok) {
         const receivedData = await receivedResponse.json();
+        console.log('Received appointments data:', receivedData);
         setReceivedAppointments(receivedData);
+      } else {
+        console.error('Failed to fetch received appointments:', await receivedResponse.text());
       }
 
       // Fetch sent appointments
       const sentResponse = await fetch('/api/appointments/sent');
+      console.log('Sent response status:', sentResponse.status);
       if (sentResponse.ok) {
         const sentData = await sentResponse.json();
+        console.log('Sent appointments data:', sentData);
         setSentAppointments(sentData);
+      } else {
+        console.error('Failed to fetch sent appointments:', await sentResponse.text());
       }
+
+      console.log('=== Finished Fetching ===');
     } catch (error) {
       console.error('Error fetching appointments:', error);
     } finally {
@@ -69,36 +82,95 @@ export default function CalendarPage() {
     const allAppointments = [...receivedAppointments, ...sentAppointments];
     const eventsByDate: { [key: string]: any[] } = {};
 
-    allAppointments.forEach((appointment) => {
-      if (appointment.preferred_time && appointment.status === 'accepted') {
-        const date = new Date(appointment.preferred_time);
-        const dateKey = date.toDateString();
-        
-        if (!eventsByDate[dateKey]) {
-          eventsByDate[dateKey] = [];
-        }
+    console.log('=== Calendar Data Conversion Debug ===');
+    console.log('Total appointments:', allAppointments.length);
+    console.log('Received appointments:', receivedAppointments);
+    console.log('Sent appointments:', sentAppointments);
 
-        eventsByDate[dateKey].push({
-          id: parseInt(appointment.id),
-          name: appointment.requester_name || appointment.profileName || 'Meeting',
-          time: date.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-          }),
-          datetime: appointment.preferred_time,
+    allAppointments.forEach((appointment) => {
+      console.log('Processing appointment:', appointment);
+      console.log('  preferredTime:', appointment.preferredTime);
+      console.log('  proposedTime:', appointment.proposedTime);
+
+      // Use proposedTime if available (for counter-proposed meetings), otherwise use preferredTime
+      const meetingTime = appointment.proposedTime || appointment.preferredTime;
+
+      // Determine the date to use
+      let date: Date;
+      let displayTime: string;
+      let dateOnlyKey: string;
+
+      if (meetingTime) {
+        // Has a specific time
+        date = new Date(meetingTime);
+        displayTime = date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
         });
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const day = date.getDate();
+        dateOnlyKey = `${year}-${month}-${day}`;
+      } else {
+        // No time set - show on today's date as "Time TBD"
+        console.log(`Appointment ${appointment.id} has no time - showing as TBD on today`);
+        date = new Date();
+        displayTime = 'Time TBD';
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const day = date.getDate();
+        dateOnlyKey = `${year}-${month}-${day}`;
       }
+
+      console.log(`Adding appointment ${appointment.id} to calendar on ${date.toDateString()} (status: ${appointment.status})`);
+
+      if (!eventsByDate[dateOnlyKey]) {
+        eventsByDate[dateOnlyKey] = {
+          dateObj: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+          events: []
+        };
+      }
+
+      // Determine the meeting name based on whether it's received or sent
+      const isReceivedMeeting = receivedAppointments.some(r => r.id === appointment.id);
+      const meetingName = isReceivedMeeting
+        ? `${appointment.requesterName}`
+        : `${appointment.profileName || 'Contact'}`;
+
+      // Add status indicator to the name
+      let statusIndicator = '';
+      if (appointment.status === 'pending') statusIndicator = '🕐 ';
+      else if (appointment.status === 'accepted') statusIndicator = '✓ ';
+      else if (appointment.status === 'rejected') statusIndicator = '✗ ';
+      else if (appointment.status === 'counter_proposed') statusIndicator = '↔ ';
+
+      eventsByDate[dateOnlyKey].events.push({
+        id: parseInt(appointment.id),
+        name: `${statusIndicator}${meetingName}${!meetingTime ? ' (TBD)' : ''}`,
+        time: displayTime,
+        datetime: meetingTime || new Date().toISOString(),
+      });
     });
 
+    console.log('Events by date:', eventsByDate);
+
     // Convert to CalendarData format
-    return Object.entries(eventsByDate).map(([dateString, events]) => ({
-      day: new Date(dateString),
-      events: events,
+    const calendarData = Object.entries(eventsByDate).map(([, data]) => ({
+      day: data.dateObj,
+      events: data.events,
     }));
+
+    console.log('Final calendar data:', calendarData);
+    console.log('=== End Calendar Debug ===');
+
+    return calendarData;
   };
 
-  const calendarData = convertToCalendarData();
+  const calendarData = React.useMemo(() => {
+    return convertToCalendarData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [receivedAppointments, sentAppointments]);
 
   if (authLoading || loading) {
     return (
