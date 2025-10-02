@@ -68,10 +68,11 @@ export function QRCodeDialog({
       const url = URL.createObjectURL(svgBlob);
 
       img.onload = () => {
-        // Set canvas size to match QR code size with padding
+        // Set canvas size to include QR code, padding, and branding
         const padding = 40;
+        const brandingHeight = 60;
         canvas.width = qrConfig.size + padding * 2;
-        canvas.height = qrConfig.size + padding * 2;
+        canvas.height = qrConfig.size + padding * 2 + brandingHeight;
 
         // Fill white background
         ctx.fillStyle = '#FFFFFF';
@@ -79,6 +80,48 @@ export function QRCodeDialog({
 
         // Draw QR code
         ctx.drawImage(img, padding, padding, qrConfig.size, qrConfig.size);
+
+        // Draw branding below QR code
+        const brandingY = qrConfig.size + padding + 10;
+        const centerX = canvas.width / 2;
+
+        // Draw separator line
+        ctx.strokeStyle = '#E5E7EB';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding, brandingY);
+        ctx.lineTo(canvas.width - padding, brandingY);
+        ctx.stroke();
+
+        // Draw branding text
+        const textY = brandingY + 25;
+
+        // Draw "Profile" text (black)
+        ctx.fillStyle = '#111827';
+        ctx.font = '600 13px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const profileText = ctx.measureText('Profile');
+        const startX = centerX - 60;
+        ctx.fillText('Profile', startX, textY);
+
+        // Draw "Base" text (orange)
+        ctx.fillStyle = '#F97316';
+        ctx.fillText('Base', startX + profileText.width, textY);
+
+        // Draw bullet separator
+        ctx.fillStyle = '#9CA3AF';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        const baseText = ctx.measureText('Base');
+        const bulletX = startX + profileText.width + baseText.width + 10;
+        ctx.fillText('•', bulletX, textY);
+
+        // Draw "profilebase.ai" text
+        ctx.fillStyle = '#6B7280';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('profilebase.ai', bulletX + 10, textY);
 
         // Convert canvas to blob and download
         canvas.toBlob((blob) => {
@@ -153,7 +196,7 @@ export function QRCodeDialog({
         <div className="flex flex-col items-center gap-6 py-6">
           <div
             ref={qrRef}
-            className="bg-white p-6 rounded-xl border-2 border-gray-200 shadow-sm"
+            className="bg-white p-6 rounded-xl border-2 border-gray-200 shadow-sm flex flex-col items-center gap-4"
           >
             <QRCodeSVG
               value={profileUrl}
@@ -163,6 +206,16 @@ export function QRCodeDialog({
               fgColor={qrConfig.fgColor}
               includeMargin={qrConfig.includeMargin}
             />
+
+            {/* ProfileBase Branding */}
+            <div className="flex items-center gap-2 pt-2 border-t border-gray-200 w-full justify-center">
+              <div className="font-semibold text-sm">
+                <span className="text-gray-900">Profile</span>
+                <span className="text-orange-500">Base</span>
+              </div>
+              <span className="text-gray-400 text-xs">•</span>
+              <span className="text-gray-500 text-xs">profilebase.ai</span>
+            </div>
           </div>
 
           {/* Profile Info */}
