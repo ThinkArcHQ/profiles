@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthKitProvider } from '@workos-inc/authkit-nextjs/components';
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { MCPServerInit } from '@/components/mcp-server-init';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
@@ -36,9 +35,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <ToastProvider>
             <AuthKitProvider>
-              <DashboardLayout>
-                {children}
-              </DashboardLayout>
+              {children}
             </AuthKitProvider>
           </ToastProvider>
         </ErrorBoundary>
