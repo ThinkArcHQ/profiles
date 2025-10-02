@@ -174,11 +174,13 @@ export default function SlugProfileClient() {
 
   const fetchFollowersData = async (profileId: number) => {
     try {
-      // For now, we'll use placeholder data since the API endpoints don't exist yet
-      // TODO: Implement actual API endpoints for followers
-      setFollowersCount(Math.floor(Math.random() * 100)); // Placeholder
-      setFollowingCount(Math.floor(Math.random() * 50)); // Placeholder
-      setIsFollowing(false); // Placeholder
+      const response = await fetch(`/api/profiles/${profileId}/follow`);
+      if (response.ok) {
+        const data = await response.json();
+        setFollowersCount(data.followerCount || 0);
+        setFollowingCount(data.followingCount || 0);
+        setIsFollowing(data.isFollowing || false);
+      }
     } catch (error) {
       console.error('Error fetching followers data:', error);
     }
@@ -186,17 +188,19 @@ export default function SlugProfileClient() {
 
   const handleFollowToggle = async () => {
     if (!user || !profile || isOwner) return;
-    
+
     setFollowLoading(true);
     try {
-      // TODO: Implement actual follow/unfollow API
-      // const response = await fetch(`/api/profiles/${profile.id}/follow`, {
-      //   method: isFollowing ? 'DELETE' : 'POST',
-      // });
-      
-      // Placeholder logic
-      setIsFollowing(!isFollowing);
-      setFollowersCount(prev => isFollowing ? prev - 1 : prev + 1);
+      const response = await fetch(`/api/profiles/${profile.id}/follow`, {
+        method: isFollowing ? 'DELETE' : 'POST',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsFollowing(!isFollowing);
+        setFollowersCount(data.stats.followerCount);
+        setFollowingCount(data.stats.followingCount);
+      }
     } catch (error) {
       console.error('Error toggling follow:', error);
     } finally {
@@ -566,14 +570,14 @@ export default function SlugProfileClient() {
 
                   {/* Followers/Following Stats */}
                   <div className="flex items-center gap-4 mb-4 text-sm">
-                    <button className="flex items-center gap-1 hover:text-orange-600 transition-colors">
+                    <Link href={`/${profile.slug}/followers`} className="flex items-center gap-1 hover:text-orange-600 transition-colors">
                       <span className="font-semibold text-gray-900">{followersCount}</span>
                       <span className="text-gray-600">followers</span>
-                    </button>
-                    <button className="flex items-center gap-1 hover:text-orange-600 transition-colors">
+                    </Link>
+                    <Link href={`/${profile.slug}/following`} className="flex items-center gap-1 hover:text-orange-600 transition-colors">
                       <span className="font-semibold text-gray-900">{followingCount}</span>
                       <span className="text-gray-600">following</span>
-                    </button>
+                    </Link>
                   </div>
 
                   {/* Action Buttons */}

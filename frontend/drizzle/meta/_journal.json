@@ -50,6 +50,13 @@
       "when": 1759026059243,
       "tag": "0006_stiff_winter_soldier",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1759369997084,
+      "tag": "0007_giant_katie_power",
+      "breakpoints": true
     }
   ]
 }
