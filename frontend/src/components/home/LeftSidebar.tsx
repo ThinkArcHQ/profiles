@@ -1,8 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Plus, User, Inbox, Calendar, Settings } from 'lucide-react';
+import { Plus, User, Inbox, Calendar, Settings, QrCode } from 'lucide-react';
 import Link from 'next/link';
+import { QRCodeDialog } from '@/components/qr-code-dialog';
 
 interface Profile {
   id: number;
@@ -97,6 +98,22 @@ export function LeftSidebar({
                 <span className="text-sm">Settings</span>
               </Button>
             </Link>
+
+            <QRCodeDialog
+              profileSlug={userProfile.slug}
+              profileName={userProfile.name}
+              profileId={userProfile.id}
+              trigger={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-3 px-3 hover:bg-gray-50"
+                >
+                  <QrCode className="h-4 w-4 mr-3 text-gray-600" />
+                  <span className="text-sm">QR Code</span>
+                </Button>
+              }
+            />
           </div>
         </div>
       )}

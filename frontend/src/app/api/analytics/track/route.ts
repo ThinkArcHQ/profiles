@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate event type
-    if (!['view', 'share', 'qr_scan'].includes(eventType)) {
+    if (!['view', 'share', 'qr_scan', 'qr_generated'].includes(eventType)) {
       return NextResponse.json(
         { error: 'Invalid event type' },
         { status: 400 }

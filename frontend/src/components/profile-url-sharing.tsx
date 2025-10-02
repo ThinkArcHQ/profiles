@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { QRCodeSVG } from 'qrcode.react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Share2, 
-  Copy, 
-  Check, 
-  ExternalLink, 
+import {
+  Share2,
+  Copy,
+  Check,
+  ExternalLink,
   QrCode,
   Twitter,
   Linkedin,
@@ -21,6 +21,7 @@ import {
   Users
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
+import { QRCodeService } from '@/lib/services/qr-service';
 
 interface ProfileAnalytics {
   totalViews: number;
@@ -170,10 +171,7 @@ export function ProfileUrlSharing({
     }
   };
 
-  const generateQRCode = () => {
-    // Using a simple QR code service - in production, you might want to use a more robust solution
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(fullUrl)}`;
-  };
+  const qrConfig = QRCodeService.getConfig({ size: 200 });
 
   if (!isPublic) {
     return (
@@ -269,13 +267,16 @@ export function ProfileUrlSharing({
         {showQR && (
           <div className="flex justify-center p-4 bg-white border rounded-lg">
             <div className="text-center">
-              <Image 
-                src={generateQRCode()} 
-                alt="Profile QR Code"
-                className="mx-auto mb-3"
-                width={200}
-                height={200}
-              />
+              <div className="mx-auto mb-3">
+                <QRCodeSVG
+                  value={fullUrl}
+                  size={qrConfig.size}
+                  level={qrConfig.level}
+                  bgColor={qrConfig.bgColor}
+                  fgColor={qrConfig.fgColor}
+                  includeMargin={qrConfig.includeMargin}
+                />
+              </div>
               <p className="text-sm text-gray-600">
                 Scan to visit your profile
               </p>

@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
+import { QRCodeDialog } from '@/components/qr-code-dialog';
 
 interface Profile {
   id: number;
@@ -153,17 +154,23 @@ export function RightSidebar({ userProfile }: RightSidebarProps) {
             <span className="text-[10px] text-gray-600 font-medium">Share</span>
           </Button>
 
-          <Link href={`/${userProfile.slug}#qr-code`} className="w-full">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-12 w-full flex flex-col items-center justify-center gap-1 bg-white hover:bg-orange-50 hover:border-orange-300 transition-all"
-              title="View QR Code"
-            >
-              <QrCode className="h-5 w-5 text-gray-700" />
-              <span className="text-[10px] text-gray-600 font-medium">QR Code</span>
-            </Button>
-          </Link>
+          <QRCodeDialog
+            profileSlug={userProfile.slug}
+            profileName={userProfile.name}
+            profileId={userProfile.id}
+            trigger={
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-12 w-full flex flex-col items-center justify-center gap-1 bg-white hover:bg-orange-50 hover:border-orange-300 transition-all"
+                title="View QR Code"
+              >
+                <QrCode className="h-5 w-5 text-gray-700" />
+                <span className="text-[10px] text-gray-600 font-medium">QR Code</span>
+              </Button>
+            }
+          />
         </div>
       </div>
 
