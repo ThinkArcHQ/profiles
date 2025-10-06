@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, MapPin } from 'lucide-react';
 import Link from 'next/link';
+import { ChatInput } from './ChatInput';
 
 interface Profile {
   id: number;
@@ -45,6 +46,9 @@ export function MainFeed({ user, loading, searchQuery, filteredProfiles }: MainF
 
   return (
     <div>
+      {/* AI Chat Input */}
+      <ChatInput />
+
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">

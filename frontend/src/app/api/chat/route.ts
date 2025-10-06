@@ -1,55 +1,89 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { openai } from '@ai-sdk/openai';
-import { streamText, convertToCoreMessages } from 'ai';
-import { createPOSTEndpoint } from '@/lib/middleware/api-wrapper';
-import { APIErrorHandler } from '@/lib/utils/api-errors';
+import { streamText, convertToModelMessages } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
 
-const chatHandler = async (request: NextRequest, context: any) => {
+// Allow streaming responses up to 30 seconds
+export const maxDuration = 30;
+
+export async function POST(req: Request) {
   try {
-    const { messages } = await request.json();
+    const { messages, model, webSearch } = await req.json();
+
+    console.log('Received request body:', { 
+      messagesCount: messages?.length, 
+      model, 
+      webSearch,
+      firstMessage: messages?.[0]
+    });
 
     if (!messages || !Array.isArray(messages)) {
-      return APIErrorHandler.createValidationError('Messages array is required');
+      console.error('Invalid messages:', messages);
+      return new Response('Messages array is required', { status: 400 });
     }
 
-    // System prompt for the AI assistant
-    const systemPrompt = `You are an AI assistant for a professional profile discovery platform. Your role is to help users:
+    // Check if Azure OpenAI is configured
+    if (!process.env.AZURE_OPENAI_API_KEY || !process.env.AZURE_OPENAI_ENDPOINT) {
+      return new Response('Azure OpenAI not configured', { status: 503 });
+    }
 
-1. **Find Experts**: Search for professionals based on skills, expertise, or industry
-2. **Book Meetings**: Help schedule meetings with professionals
-3. **Get Quotes**: Assist in requesting quotes for services
+    // Configure Azure OpenAI using the working pattern from your other code
+    const endpoint = process.env.AZURE_OPENAI_ENDPOINT || '';
+    const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME || 'gpt-5';
+    
+    console.log('Azure OpenAI Config:', {
+      endpoint,
+      deploymentName,
+      apiVersion: process.env.AZURE_OPENAI_API_VERSION,
+      hasApiKey: !!process.env.AZURE_OPENAI_API_KEY,
+      requestedModel: model,
+      webSearch
+    });
 
-Key capabilities:
-- Search through professional profiles using skills, keywords, or availability
-- Help users craft meeting requests with proper context
-- Guide users through the quote request process
-- Provide information about professionals' expertise and availability
+    const openAIProvider = createOpenAI({
+      apiKey: process.env.AZURE_OPENAI_API_KEY || '',
+      baseURL: endpoint,
+    });
 
-When users ask to find someone or book a meeting, guide them through the process step by step. Be helpful, professional, and concise.
+    // Use the deployment name directly as the model
+    const azureModel = openAIProvider(deploymentName);
 
-Available actions you can help with:
-- Searching for professionals by skills or keywords
-- Helping draft meeting requests
-- Explaining the quote request process
-- Providing guidance on profile discovery
+    // Add system message for ProfileBase context with emphasis on concise responses
+    const systemMessage = {
+      role: 'system' as const,
+      content: `You are an AI assistant for ProfileBase, a universal platform that enables AI agents to discover and connect with people worldwide.
 
-Always be helpful and guide users toward their goals of connecting with the right professionals.`;
+RESPONSE STYLE: Keep responses SHORT and CONCISE. Use 1-3 sentences maximum. Be direct and actionable.
+
+ProfileBase allows:
+- Anyone to create a discoverable profile with personal information, interests, bio, and skills
+- AI agents to find and request meetings with any person
+- People to optionally offer quotes/services if they choose
+- Complete privacy control - users decide what AI agents can access
+
+Your role is to help users:
+1. Find experts and professionals based on skills, interests, or needs
+2. Book appointments or request meetings with people
+3. Navigate the platform and understand its features
+4. Get help with profile creation and management
+
+Be helpful, friendly, and focus on connecting people through AI-powered discovery. Always give brief, actionable responses.
+
+${webSearch ? 'You have web search capabilities enabled for this conversation.' : ''}`
+    };
+
+    // Convert UI messages to model messages and combine with system message
+    const modelMessages = convertToModelMessages(messages);
+    const allMessages = [systemMessage, ...modelMessages];
 
     const result = await streamText({
-      model: openai('gpt-4-turbo'),
-      system: systemPrompt,
-      messages: convertToCoreMessages(messages),
-      maxTokens: 1000,
+      model: azureModel,
+      messages: allMessages,
+      maxTokens: 300, // Reduced for shorter responses
       temperature: 0.7,
     });
 
-    return result.toDataStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error('Chat API error:', error);
-    return APIErrorHandler.createInternalServerError('Failed to process chat request');
+    return new Response('Internal server error', { status: 500 });
   }
-};
-
-export const POST = createPOSTEndpoint('/api/chat', chatHandler, {
-  rateLimit: { requests: 20, windowMs: 60000 }, // 20 requests per minute
-});
+}

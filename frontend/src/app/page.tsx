@@ -1,12 +1,13 @@
-import { withAuth } from '@workos-inc/authkit-nextjs';
-import Link from 'next/link';
-import Profiles from './Profiles';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { db } from '@/lib/db/connection';
-import { profiles } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { withAuth } from "@workos-inc/authkit-nextjs";
+import Link from "next/link";
+import Profiles from "./Profiles";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
+import { db } from "@/lib/db/connection";
+import { profiles } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import {
   Sparkles,
   Users,
@@ -14,12 +15,12 @@ import {
   Check,
   Clock,
   Heart,
-  Zap
-} from 'lucide-react';
+  Zap,
+} from "lucide-react";
 
 export default async function Home() {
   const { user } = await withAuth();
-  
+
   // Check if user has a profile
   let userProfile = null;
   if (user) {
@@ -27,15 +28,15 @@ export default async function Home() {
       const userProfiles = await db
         .select()
         .from(profiles)
-        .where(and(eq(profiles.workosUserId, user.id), eq(profiles.isActive, true)))
+        .where(
+          and(eq(profiles.workosUserId, user.id), eq(profiles.isActive, true))
+        )
         .limit(1);
       userProfile = userProfiles.length > 0 ? userProfiles[0] : null;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error("Error fetching user profile:", error);
     }
   }
-
-
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
@@ -49,7 +50,10 @@ export default async function Home() {
                 <span className="text-black">Profile</span>
                 <span className="text-orange-600">Base</span>
               </div>
-              <Badge variant="secondary" className="ml-2 bg-orange-100 text-orange-700 border-orange-200">
+              <Badge
+                variant="secondary"
+                className="ml-2 bg-orange-100 text-orange-700 border-orange-200"
+              >
                 Beta
               </Badge>
             </div>
@@ -58,47 +62,57 @@ export default async function Home() {
             <div className="hidden md:flex items-center space-x-1">
               {user ? (
                 <>
-                  <Button variant="ghost" asChild className="text-gray-600 hover:text-orange-600">
-                    <Link href="/home">
-                      Home
-                    </Link>
+                  <Button
+                    variant="ghost"
+                    asChild
+                    className="text-gray-600 hover:text-orange-600"
+                  >
+                    <Link href="/home">Home</Link>
                   </Button>
                   {userProfile ? (
-                    <Button asChild className="bg-orange-600 hover:bg-orange-700">
-                      <Link href="/requests">
-                        Requests
-                      </Link>
+                    <Button
+                      asChild
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      <Link href="/requests">Requests</Link>
                     </Button>
                   ) : (
-                    <Button asChild className="bg-orange-600 hover:bg-orange-700">
-                      <Link href="/profile/new">
-                        Create Profile
-                      </Link>
+                    <Button
+                      asChild
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      <Link href="/profile/new">Create Profile</Link>
                     </Button>
                   )}
                   <Separator orientation="vertical" className="h-6 mx-2" />
                   <div className="flex items-center space-x-3">
                     <span className="text-sm text-gray-600">
-                      Welcome, <span className="font-semibold text-gray-900">{user.firstName}</span>
+                      Welcome,{" "}
+                      <span className="font-semibold text-gray-900">
+                        {user.firstName}
+                      </span>
                     </span>
-                    <Button variant="ghost" size="sm" asChild className="text-gray-500 hover:text-gray-700">
-                      <Link href="/logout">
-                        Sign out
-                      </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <Link href="/logout">Sign out</Link>
                     </Button>
                   </div>
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" asChild className="text-gray-600 hover:text-orange-600">
-                    <Link href="/login">
-                      Sign In
-                    </Link>
+                  <Button
+                    variant="ghost"
+                    asChild
+                    className="text-gray-600 hover:text-orange-600"
+                  >
+                    <Link href="/login">Sign In</Link>
                   </Button>
                   <Button asChild className="bg-orange-600 hover:bg-orange-700">
-                    <Link href="/profile/new">
-                      Get Started
-                    </Link>
+                    <Link href="/profile/new">Get Started</Link>
                   </Button>
                 </>
               )}
@@ -107,8 +121,18 @@ export default async function Home() {
             {/* Mobile menu button */}
             <div className="md:hidden">
               <Button variant="ghost" size="sm" className="text-gray-600">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </Button>
             </div>
@@ -137,28 +161,43 @@ export default async function Home() {
 
             {/* Subtitle */}
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-              The world's first open network where profiles meet availability. Be discoverable by AI agents, search by skills, see who's free, and send a meet request — no back-and-forth.
+              The world's first open network where profiles meet availability.
+              Be discoverable by AI agents, search by skills, see who's free,
+              and send a meet request — no back-and-forth.
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               {user && userProfile ? (
-                <Button size="lg" asChild className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-6">
+                <Button
+                  size="lg"
+                  asChild
+                  className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-6"
+                >
                   <Link href="/calendar" className="flex items-center">
                     Check Calendar
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Link>
                 </Button>
               ) : (
-                <Button size="lg" asChild className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-6">
+                <Button
+                  size="lg"
+                  asChild
+                  className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-6"
+                >
                   <Link href="/profile/new" className="flex items-center">
                     Create Your Profile
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Link>
                 </Button>
               )}
-              
-              <Button variant="outline" size="lg" asChild className="text-lg px-8 py-6 border-orange-200 text-orange-600 hover:bg-orange-50">
+
+              <Button
+                variant="outline"
+                size="lg"
+                asChild
+                className="text-lg px-8 py-6 border-orange-200 text-orange-600 hover:bg-orange-50"
+              >
                 <Link href="/home" className="flex items-center">
                   View Profiles
                   <Users className="w-5 h-5 ml-2" />
@@ -168,13 +207,15 @@ export default async function Home() {
 
             {/* Feature List */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Why people choose ProfileBase:</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Why people choose ProfileBase:
+              </h3>
               <div className="grid gap-3">
                 {[
                   "See when people are available — not just who they are",
                   "AI agents discover you 24/7 for opportunities",
                   "No more back-and-forth scheduling",
-                  "For everyone: students, freelancers, hobbyists, professionals"
+                  "For everyone: students, freelancers, hobbyists, professionals",
                 ].map((feature, index) => (
                   <div key={index} className="flex items-center space-x-3">
                     <Check className="w-5 h-5 text-orange-600 flex-shrink-0" />
@@ -189,14 +230,14 @@ export default async function Home() {
         {/* Right Side - Demo/Example */}
         <div className="flex-1 lg:flex-[2] bg-gradient-to-br from-orange-50 to-white border-l border-orange-100 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 via-transparent to-white/40"></div>
-          
+
           <div className="relative h-full flex flex-col justify-center px-4 sm:px-6 lg:px-12 py-12">
             {/* Getting Started Steps */}
             <div className="max-w-lg mx-auto">
               <h3 className="text-xl font-semibold text-gray-900 text-center mb-8">
                 Get Started in 3 Simple Steps
               </h3>
-              
+
               <div className="space-y-6">
                 {/* Step 1 */}
                 <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-orange-100 shadow-sm">
@@ -204,7 +245,9 @@ export default async function Home() {
                     <span className="text-white font-bold text-lg">1</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">Sign In</h4>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Sign In
+                    </h4>
                     <p className="text-sm text-gray-600">
                       Create your account or sign in with existing credentials
                     </p>
@@ -217,7 +260,9 @@ export default async function Home() {
                     <span className="text-white font-bold text-lg">2</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">Create Your Profile</h4>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Create Your Profile
+                    </h4>
                     <p className="text-sm text-gray-600">
                       Add your interests, skills, and availability preferences
                     </p>
@@ -230,7 +275,9 @@ export default async function Home() {
                     <span className="text-white font-bold text-lg">3</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">Start Receiving Requests</h4>
+                    <h4 className="font-semibold text-gray-900 mb-1">
+                      Start Receiving Requests
+                    </h4>
                     <p className="text-sm text-gray-600">
                       AI agents worldwide can now discover and connect with you
                     </p>
@@ -248,26 +295,31 @@ export default async function Home() {
                         Profile Ready - You&apos;re discoverable by AI agents!
                       </div>
                       <div>
-                        <Button asChild className="bg-orange-600 hover:bg-orange-700">
-                          <Link href="/calendar">
-                            Check Calendar
-                          </Link>
+                        <Button
+                          asChild
+                          className="bg-orange-600 hover:bg-orange-700"
+                        >
+                          <Link href="/calendar">Check Calendar</Link>
                         </Button>
                       </div>
                     </div>
                   ) : (
-                    <Button size="lg" asChild className="bg-orange-600 hover:bg-orange-700">
-                      <Link href="/profile/new">
-                        Create Your Profile Now
-                      </Link>
+                    <Button
+                      size="lg"
+                      asChild
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      <Link href="/profile/new">Create Your Profile Now</Link>
                     </Button>
                   )
                 ) : (
                   <div className="space-y-3">
-                    <Button size="lg" asChild className="bg-orange-600 hover:bg-orange-700 w-full">
-                      <Link href="/login">
-                        Get Started - Sign In
-                      </Link>
+                    <Button
+                      size="lg"
+                      asChild
+                      className="bg-orange-600 hover:bg-orange-700 w-full"
+                    >
+                      <Link href="/login">Get Started - Sign In</Link>
                     </Button>
                     <p className="text-xs text-gray-500">
                       Join thousands already discoverable by AI agents
@@ -276,8 +328,6 @@ export default async function Home() {
                 )}
               </div>
             </div>
-
-
           </div>
         </div>
       </div>
@@ -297,15 +347,30 @@ export default async function Home() {
 
           <div className="prose prose-lg max-w-none">
             <p className="text-lg text-gray-700 leading-relaxed mb-6">
-              At ProfileBase, we believe that <strong>real connection is more than just knowing who someone is</strong> — it's about knowing when they're available. Social platforms today show endless profiles, but they leave out the most important detail: <strong>time</strong>.
+              At ProfileBase, we believe that{" "}
+              <strong>
+                real connection is more than just knowing who someone is
+              </strong>{" "}
+              — it's about knowing when they're available. Social platforms
+              today show endless profiles, but they leave out the most important
+              detail: <strong>time</strong>.
             </p>
 
             <p className="text-lg text-gray-700 leading-relaxed mb-6">
-              That's why we're building the world's first open network where <strong>profiles meet availability</strong>. Whether you're a student searching for a study partner, a freelancer looking for clients, a hobbyist hoping to share passions, or simply someone who wants to connect with others, ProfileBase makes it effortless.
+              That's why we're building the world's first open network where{" "}
+              <strong>profiles meet availability</strong>. Whether you're a
+              student searching for a study partner, a freelancer looking for
+              clients, a hobbyist hoping to share passions, or simply someone
+              who wants to connect with others, ProfileBase makes it effortless.
             </p>
 
             <p className="text-lg text-gray-700 leading-relaxed mb-8">
-              Just search by skills or interests, see who's free when you are, and send a meet request. <strong>No more back-and-forth, no more missed opportunities</strong> — just people, ready to connect, at the right time.
+              Just search by skills or interests, see who's free when you are,
+              and send a meet request.{" "}
+              <strong>
+                No more back-and-forth, no more missed opportunities
+              </strong>{" "}
+              — just people, ready to connect, at the right time.
             </p>
 
             <div className="grid md:grid-cols-2 gap-6 mt-12">
@@ -315,7 +380,8 @@ export default async function Home() {
                   <h3 className="font-semibold text-gray-900">Open Source</h3>
                 </div>
                 <p className="text-gray-700">
-                  Built in the open with community-driven development. No vendor lock-in, full transparency.
+                  Built in the open with community-driven development. No vendor
+                  lock-in, full transparency.
                 </p>
               </div>
 
@@ -325,7 +391,8 @@ export default async function Home() {
                   <h3 className="font-semibold text-gray-900">AI-Powered</h3>
                 </div>
                 <p className="text-gray-700">
-                  Be discoverable by AI agents worldwide 24/7. They can find you, check your availability, and send meeting requests.
+                  Be discoverable by AI agents worldwide 24/7. They can find
+                  you, check your availability, and send meeting requests.
                 </p>
               </div>
             </div>
@@ -351,8 +418,9 @@ export default async function Home() {
                 </div>
               </div>
               <p className="text-gray-400 mb-6 leading-relaxed max-w-md">
-                Your profile, your choice. Connecting people with AI agents worldwide.
-                Register to make yourself discoverable by AI agents and control what they know about you.
+                Your profile, your choice. Connecting people with AI agents
+                worldwide. Register to make yourself discoverable by AI agents
+                and control what they know about you.
               </p>
             </div>
 
@@ -360,22 +428,78 @@ export default async function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Platform</h4>
               <ul className="space-y-2">
-                <li><Link href="/home" className="text-gray-400 hover:text-orange-600 transition-colors">Home</Link></li>
-                <li><Link href="/profile/new" className="text-gray-400 hover:text-orange-600 transition-colors">Create Profile</Link></li>
+                <li>
+                  <Link
+                    href="/home"
+                    className="text-gray-400 hover:text-orange-600 transition-colors"
+                  >
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/profile/new"
+                    className="text-gray-400 hover:text-orange-600 transition-colors"
+                  >
+                    Create Profile
+                  </Link>
+                </li>
                 {user && userProfile && (
-                  <li><Link href={`/${userProfile.slug}`} className="text-gray-400 hover:text-orange-600 transition-colors">Your Profile</Link></li>
+                  <li>
+                    <Link
+                      href={`/${userProfile.slug}`}
+                      className="text-gray-400 hover:text-orange-600 transition-colors"
+                    >
+                      Your Profile
+                    </Link>
+                  </li>
                 )}
-                <li><Link href="/requests" className="text-gray-400 hover:text-orange-600 transition-colors">Requests</Link></li>
-                <li><Link href="/login" className="text-gray-400 hover:text-orange-600 transition-colors">Sign In</Link></li>
+                <li>
+                  <Link
+                    href="/requests"
+                    className="text-gray-400 hover:text-orange-600 transition-colors"
+                  >
+                    Requests
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/login"
+                    className="text-gray-400 hover:text-orange-600 transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-orange-600 transition-colors">Contact Us</a></li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-orange-600 transition-colors"
+                  >
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-orange-600 transition-colors"
+                  >
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-orange-600 transition-colors"
+                  >
+                    Contact Us
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

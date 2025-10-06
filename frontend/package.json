@@ -12,6 +12,7 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@ai-sdk/azure": "^2.0.42",
     "@ai-sdk/openai": "^2.0.38",
     "@ai-sdk/react": "^2.0.56",
     "@neondatabase/serverless": "^1.0.1",
@@ -36,7 +37,7 @@
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@tabler/icons-react": "^3.35.0",
     "@workos-inc/authkit-nextjs": "^2.9.0",
-    "ai": "^5.0.56",
+    "ai": "^5.0.60",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

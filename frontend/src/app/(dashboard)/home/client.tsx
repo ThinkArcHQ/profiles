@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { LeftSidebar } from '@/components/home/LeftSidebar';
-import { MainFeed } from '@/components/home/MainFeed';
-import { RightSidebar } from '@/components/home/RightSidebar';
-import { useAuth } from '@workos-inc/authkit-nextjs/components';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { LeftSidebar } from "@/components/home/LeftSidebar";
+import { MainFeed } from "@/components/home/MainFeed";
+import { RightSidebar } from "@/components/home/RightSidebar";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 
 interface Profile {
   id: number;
@@ -21,7 +21,7 @@ interface Profile {
 export default function HomePageClient() {
   const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
-  const searchQuery = searchParams.get('q') || '';
+  const searchQuery = searchParams.get("q") || "";
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
@@ -46,13 +46,13 @@ export default function HomePageClient() {
 
   const fetchProfiles = async () => {
     try {
-      const response = await fetch('/api/search?limit=50');
+      const response = await fetch("/api/search?limit=50");
       if (response.ok) {
         const data = await response.json();
         setProfiles(data.profiles || []);
       }
     } catch (error) {
-      console.error('Error fetching profiles:', error);
+      console.error("Error fetching profiles:", error);
     } finally {
       setLoading(false);
     }
@@ -60,7 +60,7 @@ export default function HomePageClient() {
 
   const checkUserProfile = async () => {
     try {
-      const response = await fetch('/api/profiles/my');
+      const response = await fetch("/api/profiles/my");
       if (response.ok) {
         const userProfiles = await response.json();
         const hasProf = Array.isArray(userProfiles) && userProfiles.length > 0;
@@ -72,7 +72,7 @@ export default function HomePageClient() {
         }
       }
     } catch (error) {
-      console.error('Error checking profile:', error);
+      console.error("Error checking profile:", error);
     } finally {
       setCheckingProfile(false);
     }
@@ -80,14 +80,16 @@ export default function HomePageClient() {
 
   const fetchMeetingRequestsCount = async () => {
     try {
-      const response = await fetch('/api/appointments/received');
+      const response = await fetch("/api/appointments/received");
       if (response.ok) {
         const data = await response.json();
-        const pending = Array.isArray(data) ? data.filter((req: any) => req.status === 'pending').length : 0;
+        const pending = Array.isArray(data)
+          ? data.filter((req: any) => req.status === "pending").length
+          : 0;
         setMeetingRequestsCount(pending);
       }
     } catch (error) {
-      console.error('Error fetching meeting requests:', error);
+      console.error("Error fetching meeting requests:", error);
     }
   };
 
@@ -102,14 +104,14 @@ export default function HomePageClient() {
     );
   }
 
-  const filteredProfiles = profiles.filter(profile => {
+  const filteredProfiles = profiles.filter((profile) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
       profile.name.toLowerCase().includes(query) ||
       profile.headline?.toLowerCase().includes(query) ||
       profile.bio?.toLowerCase().includes(query) ||
-      profile.skills.some(skill => skill.toLowerCase().includes(query))
+      profile.skills.some((skill) => skill.toLowerCase().includes(query))
     );
   });
 

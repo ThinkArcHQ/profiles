@@ -30,7 +30,7 @@ import { nanoid } from "nanoid";
 import {
   type ChangeEventHandler,
   Children,
-  ClipboardEventHandler,
+  type ClipboardEventHandler,
   type ComponentProps,
   createContext,
   type FormEvent,
@@ -227,6 +227,7 @@ export const PromptInput = ({
   maxFileSize,
   onError,
   onSubmit,
+  children,
   ...props
 }: PromptInputProps) => {
   const [items, setItems] = useState<(FileUIPart & { id: string })[]>([]);
@@ -400,14 +401,38 @@ export const PromptInput = ({
     }
   };
 
+  const convertBlobUrlToDataUrl = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
 
-    const files: FileUIPart[] = items.map(({ ...item }) => ({
-      ...item,
-    }));
+    const formData = new FormData(event.currentTarget);
+    const text = (formData.get("message") as string) || "";
 
-    onSubmit({ text: event.currentTarget.message.value, files }, event);
+    // Convert blob URLs to data URLs asynchronously
+    Promise.all(
+      items.map(async ({ id, ...item }) => {
+        if (item.url && item.url.startsWith("blob:")) {
+          return {
+            ...item,
+            url: await convertBlobUrlToDataUrl(item.url),
+          };
+        }
+        return item;
+      })
+    ).then((files: FileUIPart[]) => {
+      onSubmit({ text, files }, event);
+      clear();
+    });
   };
 
   const ctx = useMemo<AttachmentsContext>(
@@ -440,7 +465,9 @@ export const PromptInput = ({
         )}
         onSubmit={handleSubmit}
         {...props}
-      />
+      >
+        {children}
+      </form>
     </AttachmentsContext.Provider>
   );
 };
@@ -487,13 +514,13 @@ export const PromptInputTextarea = ({
 
   const handlePaste: ClipboardEventHandler<HTMLTextAreaElement> = (event) => {
     const items = event.clipboardData?.items;
-    
+
     if (!items) {
       return;
     }
 
     const files: File[] = [];
-    
+
     for (const item of items) {
       if (item.kind === "file") {
         const file = item.getAsFile();
@@ -652,6 +679,7 @@ export const PromptInputSubmit = ({
 
   return (
     <Button
+      aria-label="Submit"
       className={cn("gap-1.5 rounded-lg", className)}
       size={size}
       type="submit"

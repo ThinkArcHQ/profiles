@@ -15,8 +15,8 @@ export type MessageProps = HTMLAttributes<HTMLDivElement> & {
 export const Message = ({ className, from, ...props }: MessageProps) => (
   <div
     className={cn(
-      "group flex w-full items-end justify-end gap-2 py-4",
-      from === "user" ? "is-user" : "is-assistant flex-row-reverse justify-end",
+      "group flex w-full items-start gap-3 py-3 relative",
+      from === "user" ? "is-user" : "is-assistant",
       className
     )}
     {...props}
@@ -24,18 +24,18 @@ export const Message = ({ className, from, ...props }: MessageProps) => (
 );
 
 const messageContentVariants = cva(
-  "is-user:dark flex flex-col gap-2 overflow-hidden rounded-lg text-sm",
+  "flex flex-col gap-2 rounded-lg text-sm flex-1 relative break-words overflow-wrap-anywhere",
   {
     variants: {
       variant: {
         contained: [
-          "max-w-[80%] px-4 py-3",
-          "group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground",
-          "group-[.is-assistant]:bg-secondary group-[.is-assistant]:text-foreground",
+          "px-4 py-3",
+          "group-[.is-user]:bg-orange-50 group-[.is-user]:text-gray-900 group-[.is-user]:border group-[.is-user]:border-orange-200",
+          "group-[.is-assistant]:bg-gray-50 group-[.is-assistant]:text-gray-900 group-[.is-assistant]:border group-[.is-assistant]:border-gray-200",
         ],
         flat: [
-          "group-[.is-user]:max-w-[80%] group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
-          "group-[.is-assistant]:text-foreground",
+          "group-[.is-user]:px-3 group-[.is-user]:py-2 group-[.is-user]:bg-orange-50 group-[.is-user]:text-gray-900 group-[.is-user]:border group-[.is-user]:border-orange-200 group-[.is-user]:rounded-lg",
+          "group-[.is-assistant]:px-3 group-[.is-assistant]:py-2 group-[.is-assistant]:bg-gray-50 group-[.is-assistant]:text-gray-900 group-[.is-assistant]:border group-[.is-assistant]:border-gray-200 group-[.is-assistant]:rounded-lg",
         ],
       },
     },
@@ -73,8 +73,10 @@ export const MessageAvatar = ({
   className,
   ...props
 }: MessageAvatarProps) => (
-  <Avatar className={cn("size-8 ring-1 ring-border", className)} {...props}>
+  <Avatar className={cn("size-8 ring-1 ring-border flex-shrink-0", className)} {...props}>
     <AvatarImage alt="" className="mt-0 mb-0" src={src} />
-    <AvatarFallback>{name?.slice(0, 2) || "ME"}</AvatarFallback>
+    <AvatarFallback className="group-[.is-user]:bg-orange-500 group-[.is-user]:text-white group-[.is-assistant]:bg-gray-500 group-[.is-assistant]:text-white text-xs font-medium">
+      {name?.slice(0, 2) || "ME"}
+    </AvatarFallback>
   </Avatar>
 );
