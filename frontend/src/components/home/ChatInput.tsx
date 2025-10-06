@@ -136,14 +136,14 @@ export function ChatInput() {
           <span>Press Enter to send, Shift+Enter for new line</span>
         </div>
 
-        {/* Chat Messages - Timeline Format with Fixed Height */}
+        {/* Chat Messages - Timeline Format with Contained Scrolling */}
         {messages.length > 0 && (
-          <div className="mt-4 h-80 rounded-lg border border-gray-200 bg-white relative flex flex-col">
-            {/* Orange Timeline Line - Fixed positioning */}
-            <div className="absolute left-4 top-4 bottom-4 w-1 bg-orange-500 z-10"></div>
+          <div className="mt-4 max-h-80 rounded-lg border border-gray-200 bg-white relative overflow-hidden">
+            {/* Orange Timeline Line - Dynamic positioning */}
+            <div className="absolute left-4 top-0 bottom-0 w-1 bg-orange-500 z-10"></div>
             
-            {/* Scrollable Messages Container */}
-            <div className="flex-1 overflow-y-auto p-4 pl-8 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {/* Messages Container - Scrollable within max height */}
+            <div className="max-h-80 overflow-y-auto p-4 pl-8 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               {messages.map((message, index) => (
                 <div key={message.id} className="relative mb-4 last:mb-0 flex items-start gap-3">
                   {/* Message Content */}
