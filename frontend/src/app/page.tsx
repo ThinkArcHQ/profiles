@@ -140,11 +140,11 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* Main Content - Two Column Layout */}
-      <div className="min-h-[85vh] flex">
-        {/* Left Side - Content */}
-        <div className="flex-1 lg:flex-[3] flex flex-col justify-center px-4 sm:px-6 lg:px-12 xl:px-20">
-          <div className="max-w-3xl mx-auto lg:mx-0 py-16 lg:py-24">
+      {/* Main Content - Single Column Layout */}
+      <div className="min-h-[85vh] flex items-center justify-center">
+        {/* Centered Content */}
+        <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-12 xl:px-20">
+          <div className="py-16 lg:py-24 text-center">
             {/* Hero Badge */}
             <div className="inline-flex items-center px-4 py-2 bg-orange-50 rounded-full border border-orange-200 text-orange-700 text-sm font-medium mb-8">
               <Clock className="w-4 h-4 mr-2" />
@@ -152,7 +152,7 @@ export default async function Home() {
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight mx-auto">
               Connect With People
               <span className="block bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 bg-clip-text text-transparent">
                 At The Right Time
@@ -160,14 +160,14 @@ export default async function Home() {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-3xl mx-auto">
               The world's first open network where profiles meet availability.
               Be discoverable by AI agents, search by skills, see who's free,
               and send a meet request — no back-and-forth.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 mb-12 justify-center">
               {user && userProfile ? (
                 <Button
                   size="lg"
@@ -206,11 +206,11 @@ export default async function Home() {
             </div>
 
             {/* Feature List */}
-            <div className="space-y-4">
+            <div className="space-y-4 max-w-2xl mx-auto">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Why people choose ProfileBase:
               </h3>
-              <div className="grid gap-3">
+              <div className="grid gap-3 text-left">
                 {[
                   "See when people are available — not just who they are",
                   "AI agents discover you 24/7 for opportunities",
@@ -226,111 +226,10 @@ export default async function Home() {
             </div>
           </div>
         </div>
-
-        {/* Right Side - Demo/Example */}
-        <div className="flex-1 lg:flex-[2] bg-gradient-to-br from-orange-50 to-white border-l border-orange-100 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-100/20 via-transparent to-white/40"></div>
-
-          <div className="relative h-full flex flex-col justify-center px-4 sm:px-6 lg:px-12 py-12">
-            {/* Getting Started Steps */}
-            <div className="max-w-lg mx-auto">
-              <h3 className="text-xl font-semibold text-gray-900 text-center mb-8">
-                Get Started in 3 Simple Steps
-              </h3>
-
-              <div className="space-y-6">
-                {/* Step 1 */}
-                <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-orange-100 shadow-sm">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">1</span>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Sign In
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Create your account or sign in with existing credentials
-                    </p>
-                  </div>
-                </div>
-
-                {/* Step 2 */}
-                <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-orange-100 shadow-sm">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">2</span>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Create Your Profile
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Add your interests, skills, and availability preferences
-                    </p>
-                  </div>
-                </div>
-
-                {/* Step 3 */}
-                <div className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-orange-100 shadow-sm">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">3</span>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Start Receiving Requests
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      AI agents worldwide can now discover and connect with you
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Call to Action */}
-              <div className="text-center mt-8">
-                {user ? (
-                  userProfile ? (
-                    <div className="space-y-3">
-                      <div className="inline-flex items-center px-4 py-2 bg-green-50 rounded-full border border-green-200 text-green-700 text-sm">
-                        <Check className="w-4 h-4 mr-2" />
-                        Profile Ready - You&apos;re discoverable by AI agents!
-                      </div>
-                      <div>
-                        <Button
-                          asChild
-                          className="bg-orange-600 hover:bg-orange-700"
-                        >
-                          <Link href="/calendar">Check Calendar</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button
-                      size="lg"
-                      asChild
-                      className="bg-orange-600 hover:bg-orange-700"
-                    >
-                      <Link href="/profile/new">Create Your Profile Now</Link>
-                    </Button>
-                  )
-                ) : (
-                  <div className="space-y-3">
-                    <Button
-                      size="lg"
-                      asChild
-                      className="bg-orange-600 hover:bg-orange-700 w-full"
-                    >
-                      <Link href="/login">Get Started - Sign In</Link>
-                    </Button>
-                    <p className="text-xs text-gray-500">
-                      Join thousands already discoverable by AI agents
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
+
+      {/* Profiles Section */}
+      <Profiles />
 
       {/* Vision Section */}
       <div className="bg-white py-20 border-y border-orange-100">
@@ -399,9 +298,6 @@ export default async function Home() {
           </div>
         </div>
       </div>
-
-      {/* Profiles Section */}
-      <Profiles />
 
       {/* Footer */}
       <footer className="bg-[#0a0a0a] border-t border-gray-800">

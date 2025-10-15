@@ -38,3 +38,6 @@ yarn-error.log*
 debug-profiles.js
 debug-profiles.mjs
 CLAUDE.md
+
+# Reference repositories (for analysis only, not part of main project)
+reference-repos/
