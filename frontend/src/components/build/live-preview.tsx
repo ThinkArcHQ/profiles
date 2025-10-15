@@ -7,34 +7,84 @@ interface LivePreviewProps {
   files: GeneratedFile[];
 }
 
+/**
+ * Build preview HTML from generated files
+ * Supports vanilla HTML/CSS/JS only
+ */
 function buildPreviewHTML(files: GeneratedFile[]): string {
-  // Find HTML, CSS, and JS files
   const htmlFile = files.find((f) => f.language === 'html');
   const cssFiles = files.filter((f) => f.language === 'css');
-  const jsFiles = files.filter(
-    (f) => f.language === 'javascript' || f.language === 'typescript'
-  );
+  const jsFiles = files.filter((f) => f.language === 'javascript');
 
-  // If no HTML file, create a basic structure
-  let htmlContent = htmlFile?.content || '<div id="root"></div>';
+  console.log('Building preview with files:', {
+    htmlFile: htmlFile?.path,
+    cssFiles: cssFiles.map(f => ({ path: f.path, language: f.language, hasContent: !!f.content })),
+    jsFiles: jsFiles.map(f => ({ path: f.path, language: f.language })),
+  });
 
-  // Combine all CSS
+  // If we have a complete HTML file, use it as base
+  if (htmlFile && htmlFile.content.includes('<!DOCTYPE html>')) {
+    let html = htmlFile.content;
+    
+    // Check if CSS needs to be injected
+    // Only inject if there are CSS files AND the HTML doesn't already have inline styles
+    // NOTE: We ALWAYS inject even if there's a <link> tag because the linked file won't exist in iframe
+    const hasInlineStyles = html.includes('<style>') || html.includes('<style ');
+    
+    console.log('CSS injection check:', {
+      cssFilesCount: cssFiles.length,
+      hasInlineStyles,
+      willInject: cssFiles.length > 0 && !hasInlineStyles
+    });
+    
+    if (cssFiles.length > 0 && !hasInlineStyles) {
+      const cssContent = cssFiles.map((f) => f.content).join('\n\n');
+      const styleTag = `  <style>\n${cssContent}\n  </style>`;
+      
+      console.log('Injecting CSS:', cssContent.substring(0, 100) + '...');
+      
+      // Try to inject before </head>
+      if (html.includes('</head>')) {
+        html = html.replace('</head>', `${styleTag}\n</head>`);
+        console.log('CSS injected before </head>');
+      } else if (html.includes('<head>')) {
+        // If no closing head tag, add after opening head tag
+        html = html.replace('<head>', `<head>\n${styleTag}`);
+        console.log('CSS injected after <head>');
+      }
+    }
+    
+    // Check if JS needs to be injected
+    const hasInlineScript = html.includes('<script>') || html.includes('<script ');
+    const hasLinkedScript = html.includes('src="script.js"') || html.includes("src='script.js'");
+    
+    if (jsFiles.length > 0 && !hasInlineScript && !hasLinkedScript) {
+      const jsContent = jsFiles.map((f) => f.content).join('\n\n');
+      const scriptTag = `  <script>\n${jsContent}\n  </script>`;
+      
+      // Try to inject before </body>
+      if (html.includes('</body>')) {
+        html = html.replace('</body>', `${scriptTag}\n</body>`);
+      } else {
+        // If no closing body tag, append at the end
+        html += `\n${scriptTag}`;
+      }
+    }
+    
+    return html;
+  }
+
+  // Otherwise, build HTML from scratch
+  const htmlContent = htmlFile?.content || '<div class="container"><h1>No content generated yet</h1></div>';
   const cssContent = cssFiles.map((f) => f.content).join('\n\n');
+  const jsContent = jsFiles.map((f) => f.content).join('\n\n');
 
-  // Combine all JS (note: TypeScript won't run directly, would need transpilation)
-  const jsContent = jsFiles
-    .filter((f) => f.language === 'javascript')
-    .map((f) => f.content)
-    .join('\n\n');
-
-  // Build complete HTML document with sandbox security
-  return `
-<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Preview</title>
+  <title>Profile Preview</title>
   <style>
     * {
       margin: 0;
@@ -42,19 +92,17 @@ function buildPreviewHTML(files: GeneratedFile[]): string {
       box-sizing: border-box;
     }
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      line-height: 1.5;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
     }
     ${cssContent}
   </style>
 </head>
 <body>
   ${htmlContent}
+  
   <script>
-    // Disable dangerous APIs for security
-    window.eval = undefined;
-    window.Function = undefined;
-    
     // Error handling
     window.addEventListener('error', (event) => {
       console.error('Preview error:', event.error);
@@ -76,14 +124,12 @@ function buildPreviewHTML(files: GeneratedFile[]): string {
     }
   </script>
 </body>
-</html>
-  `.trim();
+</html>`.trim();
 }
 
 export function LivePreview({ files }: LivePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
 
   useEffect(() => {
@@ -120,47 +166,14 @@ export function LivePreview({ files }: LivePreviewProps) {
     }
   }, [files, previewKey]);
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    setError(null);
-    setPreviewKey((prev) => prev + 1);
-    setTimeout(() => setIsRefreshing(false), 500);
-  };
-
   return (
-    <div className="flex h-full flex-col">
-      {/* Header with refresh button */}
-      <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-2">
-        <span className="text-sm font-medium">Live Preview</span>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
-          aria-label="Refresh preview"
-        >
-          <svg
-            className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          <span>Refresh</span>
-        </button>
-      </div>
-
-      {/* Error display */}
+    <div className="flex h-full flex-col bg-white">
+      {/* Error display - only show if there's an error */}
       {error && (
-        <div className="border-b bg-destructive/10 px-4 py-3">
+        <div className="border-b bg-red-50 px-4 py-3">
           <div className="flex items-start gap-2">
             <svg
-              className="h-5 w-5 flex-shrink-0 text-destructive"
+              className="h-5 w-5 flex-shrink-0 text-red-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -173,14 +186,14 @@ export function LivePreview({ files }: LivePreviewProps) {
               />
             </svg>
             <div className="flex-1">
-              <p className="text-sm font-medium text-destructive">
+              <p className="text-sm font-medium text-red-800">
                 Preview Error
               </p>
-              <p className="mt-1 text-sm text-destructive/80">{error}</p>
+              <p className="mt-1 text-sm text-red-700">{error}</p>
             </div>
             <button
               onClick={() => setError(null)}
-              className="text-destructive/60 hover:text-destructive"
+              className="text-red-400 hover:text-red-600"
               aria-label="Dismiss error"
             >
               <svg
@@ -201,7 +214,7 @@ export function LivePreview({ files }: LivePreviewProps) {
         </div>
       )}
 
-      {/* Preview iframe */}
+      {/* Preview iframe - full height, no header */}
       <div className="flex-1 overflow-hidden bg-white">
         <iframe
           ref={iframeRef}

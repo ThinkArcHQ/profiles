@@ -50,59 +50,23 @@ export function PreviewPanel({
 
   return (
     <div className="flex h-full w-full flex-col bg-[#0a0a0a]">
-      {/* Header with toggle */}
-      <div className="border-b border-white/10 p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Preview</h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => onModeChange('code')}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                previewMode === 'code'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-white/5 text-white/70 hover:bg-white/10'
-              }`}
-              aria-pressed={previewMode === 'code'}
-              aria-label="Show code view"
-            >
-              Code
-            </button>
-            <button
-              onClick={() => onModeChange('preview')}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                previewMode === 'preview'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-white/5 text-white/70 hover:bg-white/10'
-              }`}
-              aria-pressed={previewMode === 'preview'}
-              aria-label="Show live preview"
-            >
-              Preview
-            </button>
-            {files.length > 0 && (
-              <button
-                onClick={handleDownloadAll}
-                disabled={isDownloading}
-                className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
-                aria-label="Download all files as ZIP"
-              >
-                <IconDownload className="h-4 w-4" />
-                {isDownloading ? 'Downloading...' : 'Download All'}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Content Area */}
       <div className="flex flex-1 overflow-hidden">
         {files.length === 0 ? (
-          <div className="flex h-full w-full items-center justify-center text-center">
-            <div className="space-y-2">
-              <p className="text-lg font-medium text-white">No files generated yet</p>
-              <p className="text-sm text-white/50">
-                Start a conversation to generate your profile page
-              </p>
+          <div className="flex h-full w-full items-center justify-center text-center p-8">
+            <div className="space-y-4 max-w-md">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 border border-orange-500/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-orange-500/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-white mb-2">Ready to build</p>
+                <p className="text-sm text-white/50 leading-relaxed">
+                  Start a conversation to generate your profile page. The code will appear here in real-time.
+                </p>
+              </div>
             </div>
           </div>
         ) : (
@@ -110,7 +74,7 @@ export function PreviewPanel({
             {previewMode === 'code' ? (
               <>
                 {/* File Tree Sidebar */}
-                <div className="w-64 border-r border-white/10">
+                <div className="w-64 border-r border-white/10 bg-[#0a0a0a]">
                   <FileTree
                     files={files}
                     activeFile={activeFile}
@@ -119,20 +83,25 @@ export function PreviewPanel({
                 </div>
 
                 {/* Code Editor */}
-                <div className="flex-1">
+                <div className="flex-1 bg-[#1e1e1e]">
                   {activeFileData ? (
                     <CodeEditor file={activeFileData} />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-center">
-                      <p className="text-sm text-white/50">
-                        Select a file to view its contents
-                      </p>
+                    <div className="flex h-full items-center justify-center text-center p-8">
+                      <div className="space-y-3">
+                        <svg className="w-12 h-12 mx-auto text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-sm text-white/50">
+                          Select a file from the sidebar
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
               </>
             ) : (
-              <div className="flex-1">
+              <div className="flex-1 bg-white">
                 <LivePreview files={files} />
               </div>
             )}

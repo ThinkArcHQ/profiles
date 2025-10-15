@@ -19,6 +19,31 @@ interface MessageListProps {
   messages: Message[];
 }
 
+/**
+ * Strip code blocks and FILE: declarations from chat messages
+ * Code should only appear in the preview panel, not in chat
+ * 
+ * Extracts only the description/explanation text before the first FILE: block
+ */
+function sanitizeMessageForDisplay(message: string): string {
+  // Find the first FILE: declaration
+  const fileIndex = message.search(/FILE:\s*[^\n]+/i);
+  
+  if (fileIndex !== -1) {
+    // Take only the text before the first FILE: declaration
+    message = message.substring(0, fileIndex);
+  }
+  
+  // Remove any remaining code blocks
+  message = message.replace(/```[\s\S]*?```/g, '');
+  
+  // Remove multiple consecutive newlines
+  message = message.replace(/\n{3,}/g, '\n\n');
+  
+  // Trim whitespace
+  return message.trim();
+}
+
 export function MessageList({ messages }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -29,21 +54,32 @@ export function MessageList({ messages }: MessageListProps) {
 
   return (
     <div className="space-y-6">
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          className={`flex ${
-            message.role === 'user' ? 'justify-end' : 'justify-start'
-          }`}
-        >
+      {messages.map((message) => {
+        // Sanitize assistant messages to remove code blocks
+        const displayContent = message.role === 'assistant' 
+          ? sanitizeMessageForDisplay(message.content)
+          : message.content;
+        
+        // Skip rendering if message is empty after sanitization
+        if (!displayContent.trim()) {
+          return null;
+        }
+
+        return (
           <div
-            className={`max-w-[85%] space-y-2 rounded-xl px-4 py-3 ${
-              message.role === 'user'
-                ? 'bg-orange-500/10 border border-orange-500/20 text-white'
-                : 'bg-white/5 border border-white/10 text-white/90'
+            key={message.id}
+            className={`flex ${
+              message.role === 'user' ? 'justify-end' : 'justify-start'
             }`}
           >
-            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+            <div
+              className={`max-w-[85%] space-y-2 rounded-xl px-4 py-3 ${
+                message.role === 'user'
+                  ? 'bg-orange-500/10 border border-orange-500/20 text-white'
+                  : 'bg-white/5 border border-white/10 text-white/90'
+              }`}
+            >
+              <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{displayContent}</p>
             
             {/* Display attached files if any */}
             {message.files && message.files.length > 0 && (
@@ -72,13 +108,14 @@ export function MessageList({ messages }: MessageListProps) {
               </div>
             )}
             
-            {/* Timestamp */}
-            <p className="text-xs opacity-50">
-              {formatDistanceToNow(message.timestamp, { addSuffix: true })}
-            </p>
+              {/* Timestamp */}
+              <p className="text-xs opacity-50">
+                {formatDistanceToNow(message.timestamp, { addSuffix: true })}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       <div ref={messagesEndRef} />
     </div>
   );
