@@ -40,7 +40,7 @@ export function ChatInput() {
     api: '/api/chat',
   });
 
-  const handleSubmit = (message: PromptInputMessage) => {
+  const handleSubmit = async (message: PromptInputMessage) => {
     const hasText = Boolean(message.text);
     const hasAttachments = Boolean(message.files?.length);
 
@@ -48,7 +48,8 @@ export function ChatInput() {
       return;
     }
 
-    sendMessage(
+    // Send the message
+    await sendMessage(
       {
         text: message.text || 'Sent with attachments',
         files: message.files,
@@ -61,6 +62,7 @@ export function ChatInput() {
       }
     );
 
+    // CRITICAL: Clear the input immediately after sending
     setText('');
   };
 

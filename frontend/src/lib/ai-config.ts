@@ -16,15 +16,26 @@ function createAzureOpenAI() {
   const apiKey = process.env.AZURE_OPENAI_API_KEY || "";
   const apiVersion = process.env.AZURE_OPENAI_API_VERSION || "2024-06-01";
 
+  console.log("🔧 Azure OpenAI Config:", {
+    endpoint: endpoint.substring(0, 50) + "...",
+    deploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
+    apiVersion,
+    hasApiKey: !!apiKey,
+  });
+
   // Azure endpoint format: https://{resource}.cognitiveservices.azure.com/openai/deployments/{deployment-id}
   // Remove trailing slash and any existing path
   const baseEndpoint = endpoint.replace(/\/+$/, "").split("/openai")[0];
+
+  const baseURL = `${baseEndpoint}/openai/deployments/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`;
+  
+  console.log("🌐 Base URL:", baseURL);
 
   return createOpenAI({
     apiKey,
     // For Azure, we need to include the deployment name in the baseURL
     // The SDK will append the endpoint path (e.g., /chat/completions)
-    baseURL: `${baseEndpoint}/openai/deployments/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`,
+    baseURL,
     headers: {
       "api-key": apiKey,
     },
@@ -38,40 +49,43 @@ function createAzureOpenAI() {
           : url.url;
       const urlObj = new URL(urlString);
       urlObj.searchParams.set("api-version", apiVersion);
-      return fetch(urlObj.toString(), init);
+      
+      console.log("📡 Making request to:", urlObj.toString().substring(0, 100) + "...");
+      
+      return fetch(urlObj.toString(), init).then((response) => {
+        console.log("📥 Response status:", response.status, response.statusText);
+        if (!response.ok) {
+          response.clone().text().then((text) => {
+            console.error("❌ Error response body:", text.substring(0, 500));
+          });
+        }
+        return response;
+      });
     },
   });
 }
 
 /**
  * Get the configured AI model
- * Defaults to Azure OpenAI, falls back to OpenAI if Azure is not configured
+ * Uses Azure OpenAI with GPT-5
  */
 export function getAIModel() {
   const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME;
 
-  if (deploymentName && process.env.AZURE_OPENAI_API_KEY) {
-    const azure = createAzureOpenAI();
-    // Use 'gpt-4' as a placeholder model name since the deployment is in the baseURL
-    // The actual deployment name is already included in the baseURL
-    return azure.chat("gpt-5");
+  if (!deploymentName || !process.env.AZURE_OPENAI_API_KEY) {
+    throw new Error(
+      "Azure OpenAI not configured. Please set AZURE_OPENAI_API_KEY and AZURE_OPENAI_DEPLOYMENT_NAME"
+    );
   }
 
-  // Fallback to OpenAI
-  if (process.env.OPENAI_API_KEY) {
-    return openai("gpt-4o");
-  }
-
-  throw new Error(
-    "No AI provider configured. Please set AZURE_OPENAI_API_KEY or OPENAI_API_KEY"
-  );
+  const azure = createAzureOpenAI();
+  // Use gpt-5 model
+  return azure.chat("gpt-5");
 }
 
 /**
  * Default generation settings
  */
 export const DEFAULT_GENERATION_CONFIG = {
-  temperature: 0.7,
   maxTokens: 4000,
-  topP: 0.9,
 };

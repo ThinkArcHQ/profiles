@@ -2,11 +2,20 @@
  * Utility functions for parsing code blocks from AI responses
  */
 
+import {
+  parseSearchReplace,
+  applySearchReplace,
+  hasSearchReplaceBlocks,
+  type SearchReplaceBlock,
+} from './search-replace-parser';
+
 export interface ParsedCodeBlock {
   path: string;
   content: string;
   language: string;
   isComplete: boolean;
+  isSearchReplace?: boolean;
+  searchReplaceBlocks?: SearchReplaceBlock[];
 }
 
 export interface ParsedFile {
@@ -18,14 +27,32 @@ export interface ParsedFile {
 /**
  * Extracts code blocks from markdown-formatted text
  * Supports multiple formats:
- * 1. FILE: path/to/file.tsx followed by ```language
- * 2. ```language:path
- * 3. Standard ```language
+ * 1. FILE: path with SEARCH/REPLACE blocks (for modifications)
+ * 2. FILE: path/to/file.tsx followed by ```language (for full files)
+ * 3. ```language:path or ```language (fallback)
  */
 export function parseCodeBlocks(text: string): ParsedCodeBlock[] {
   const blocks: ParsedCodeBlock[] = [];
   
-  // First, try to match FILE: path format (our system prompt format)
+  // Check if this response contains SEARCH/REPLACE blocks
+  if (hasSearchReplaceBlocks(text)) {
+    const edits = parseSearchReplace(text);
+    
+    edits.forEach(edit => {
+      blocks.push({
+        path: edit.file,
+        content: '', // Will be applied to existing content
+        language: getLanguageFromPath(edit.file),
+        isComplete: true,
+        isSearchReplace: true,
+        searchReplaceBlocks: edit.blocks,
+      });
+    });
+    
+    return blocks;
+  }
+  
+  // Otherwise, parse as full file blocks
   // Pattern: FILE: path\n```language\ncontent\n```
   const fileBlockRegex = /FILE:\s*([^\n]+)\n```(\w+)\n([\s\S]*?)(?:```|$)/g;
   
@@ -39,6 +66,7 @@ export function parseCodeBlocks(text: string): ParsedCodeBlock[] {
       content: content.trim(),
       language: language.toLowerCase(),
       isComplete,
+      isSearchReplace: false,
     });
   }
   
@@ -57,6 +85,7 @@ export function parseCodeBlocks(text: string): ParsedCodeBlock[] {
         content: content.trim(),
         language: language.toLowerCase(),
         isComplete,
+        isSearchReplace: false,
       });
     }
   }
@@ -111,7 +140,7 @@ export function getLanguageFromPath(path: string): string {
 
 /**
  * Merges new code blocks with existing files
- * Updates existing files or adds new ones
+ * Handles both full file replacements and SEARCH/REPLACE modifications
  */
 export function mergeCodeBlocks(
   existingFiles: ParsedFile[],
@@ -126,14 +155,37 @@ export function mergeCodeBlocks(
   
   // Update or add new blocks
   newBlocks.forEach(block => {
-    if (block.isComplete) {
+    // Handle SEARCH/REPLACE blocks
+    if (block.isSearchReplace && block.searchReplaceBlocks) {
+      const existing = fileMap.get(block.path);
+      
+      if (existing) {
+        // Apply SEARCH/REPLACE to existing content
+        const result = applySearchReplace(existing.content, block.searchReplaceBlocks);
+        
+        if (result.success) {
+          fileMap.set(block.path, {
+            ...existing,
+            content: result.content,
+          });
+        } else {
+          // Log errors but keep existing content
+          console.warn(`Failed to apply SEARCH/REPLACE to ${block.path}:`, result.errors);
+        }
+      } else {
+        console.warn(`Cannot apply SEARCH/REPLACE to non-existent file: ${block.path}`);
+      }
+    }
+    // Handle full file blocks
+    else if (block.isComplete) {
       fileMap.set(block.path, {
         path: block.path,
         content: block.content,
         language: block.language,
       });
-    } else {
-      // If incomplete, append to existing content
+    }
+    // Handle incomplete streaming blocks
+    else {
       const existing = fileMap.get(block.path);
       if (existing) {
         fileMap.set(block.path, {

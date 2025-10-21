@@ -16,6 +16,7 @@ interface PreviewPanelProps {
   previewMode: 'code' | 'preview';
   onFileSelect: (filePath: string) => void;
   onModeChange: (mode: 'code' | 'preview') => void;
+  refreshKey?: number;
 }
 
 export function PreviewPanel({
@@ -24,6 +25,7 @@ export function PreviewPanel({
   previewMode,
   onFileSelect,
   onModeChange,
+  refreshKey = 0,
 }: PreviewPanelProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const activeFileData = files.find((f) => f.path === activeFile);
@@ -102,7 +104,7 @@ export function PreviewPanel({
               </>
             ) : (
               <div className="flex-1 bg-white">
-                <LivePreview files={files} />
+                <LivePreview files={files} refreshKey={refreshKey} />
               </div>
             )}
           </>

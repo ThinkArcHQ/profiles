@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "Deepwiki": {
+      "command": "http",
+      "args": [
+        "http-server",
+        "https://mcp.deepwiki.com/mcp"
+      ]
+    },
+    "Context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [
+        "get-library-docs",
+        "resolve-library-id"
+      ]
+    }
+  }
+}

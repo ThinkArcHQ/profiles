@@ -24,6 +24,7 @@ interface MessageListProps {
  * Code should only appear in the preview panel, not in chat
  * 
  * Extracts only the description/explanation text before the first FILE: block
+ * Also removes SEARCH/REPLACE blocks
  */
 function sanitizeMessageForDisplay(message: string): string {
   // Find the first FILE: declaration
@@ -34,6 +35,9 @@ function sanitizeMessageForDisplay(message: string): string {
     message = message.substring(0, fileIndex);
   }
   
+  // Remove SEARCH/REPLACE blocks
+  message = message.replace(/<<<<<<< SEARCH[\s\S]*?>>>>>>> REPLACE/g, '');
+  
   // Remove any remaining code blocks
   message = message.replace(/```[\s\S]*?```/g, '');
   
@@ -42,6 +46,41 @@ function sanitizeMessageForDisplay(message: string): string {
   
   // Trim whitespace
   return message.trim();
+}
+
+/**
+ * Detect if message contains a step indicator emoji
+ */
+function getMessageType(message: string): 'planning' | 'building' | 'styling' | 'interactive' | 'complete' | 'update' | 'default' {
+  if (message.includes('🎯') || message.toLowerCase().includes('planning')) return 'planning';
+  if (message.includes('📐') || message.toLowerCase().includes('structure') || message.toLowerCase().includes('building')) return 'building';
+  if (message.includes('🎨') || message.toLowerCase().includes('style') || message.toLowerCase().includes('design')) return 'styling';
+  if (message.includes('⚡') || message.toLowerCase().includes('interactivity') || message.toLowerCase().includes('interactive')) return 'interactive';
+  if (message.includes('✅') || message.toLowerCase().includes('done') || message.toLowerCase().includes('complete')) return 'complete';
+  if (message.includes('🔧') || message.includes('🔍') || message.toLowerCase().includes('updating')) return 'update';
+  return 'default';
+}
+
+/**
+ * Get styling based on message type
+ */
+function getMessageStyling(type: string) {
+  switch (type) {
+    case 'planning':
+      return 'bg-blue-500/10 border-blue-500/30 shadow-blue-500/5';
+    case 'building':
+      return 'bg-purple-500/10 border-purple-500/30 shadow-purple-500/5';
+    case 'styling':
+      return 'bg-pink-500/10 border-pink-500/30 shadow-pink-500/5';
+    case 'interactive':
+      return 'bg-yellow-500/10 border-yellow-500/30 shadow-yellow-500/5';
+    case 'complete':
+      return 'bg-green-500/10 border-green-500/30 shadow-green-500/5';
+    case 'update':
+      return 'bg-orange-500/10 border-orange-500/30 shadow-orange-500/5';
+    default:
+      return 'bg-white/5 border-white/10';
+  }
 }
 
 export function MessageList({ messages }: MessageListProps) {
@@ -65,6 +104,10 @@ export function MessageList({ messages }: MessageListProps) {
           return null;
         }
 
+        // Detect message type for assistant messages
+        const messageType = message.role === 'assistant' ? getMessageType(displayContent) : 'default';
+        const messageStyling = message.role === 'assistant' ? getMessageStyling(messageType) : '';
+
         return (
           <div
             key={message.id}
@@ -73,10 +116,10 @@ export function MessageList({ messages }: MessageListProps) {
             }`}
           >
             <div
-              className={`max-w-[85%] space-y-2 rounded-xl px-4 py-3 ${
+              className={`max-w-[85%] space-y-2 rounded-xl px-4 py-3 shadow-lg transition-all duration-300 ${
                 message.role === 'user'
                   ? 'bg-orange-500/10 border border-orange-500/20 text-white'
-                  : 'bg-white/5 border border-white/10 text-white/90'
+                  : `${messageStyling} border text-white/90`
               }`}
             >
               <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{displayContent}</p>

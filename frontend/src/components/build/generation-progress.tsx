@@ -7,10 +7,53 @@ interface GenerationProgressProps {
   generatingFiles: Set<string>;
 }
 
+const interestingMessages = {
+  thinking: [
+    "🎯 Planning your profile page",
+    "🤔 Analyzing your requirements",
+    "💭 Gathering ideas",
+    "📋 Creating the blueprint",
+    "🎨 Designing the layout",
+  ],
+  html: [
+    "📐 Building the structure",
+    "🏗️ Crafting semantic HTML",
+    "🔨 Assembling components",
+    "📄 Creating the foundation",
+    "🧱 Laying out the framework",
+  ],
+  css: [
+    "🎨 Adding styles and design",
+    "✨ Polishing the visuals",
+    "🌈 Applying colors and gradients",
+    "💅 Making it beautiful",
+    "🖌️ Perfecting the details",
+  ],
+  js: [
+    "⚡ Adding interactivity",
+    "🔧 Wiring up functionality",
+    "🎭 Bringing it to life",
+    "🚀 Implementing features",
+    "💫 Adding the magic",
+  ],
+  general: [
+    "⚙️ Working on your page",
+    "🔨 Building your vision",
+    "✨ Creating something awesome",
+    "🎯 Making it happen",
+    "🚀 Almost there",
+  ],
+};
+
+function getRandomMessage(category: keyof typeof interestingMessages): string {
+  const messages = interestingMessages[category];
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
 function getGenerationMessage(generatingFiles: Set<string>): string {
   // If no files yet, show thinking
   if (generatingFiles.size === 0) {
-    return "Thinking";
+    return getRandomMessage("thinking");
   }
 
   // Get the current file being generated
@@ -22,13 +65,13 @@ function getGenerationMessage(generatingFiles: Set<string>): string {
 
   // Determine message based on file type
   if (fileName.includes(".html") || fileName.includes("index")) {
-    return "Writing HTML";
+    return getRandomMessage("html");
   } else if (fileName.includes(".css") || fileName.includes("style")) {
-    return "Adding styles";
+    return getRandomMessage("css");
   } else if (fileName.includes(".js") || fileName.includes("script")) {
-    return "Writing JavaScript";
+    return getRandomMessage("js");
   } else {
-    return "Generating code";
+    return getRandomMessage("general");
   }
 }
 
@@ -37,9 +80,13 @@ export function GenerationProgress({
   generatingFiles,
 }: GenerationProgressProps) {
   const [dots, setDots] = useState("");
+  const [currentMessage, setCurrentMessage] = useState("");
 
   useEffect(() => {
     if (!isGenerating) return;
+
+    // Set initial message
+    setCurrentMessage(getGenerationMessage(generatingFiles));
 
     // Animate dots every 500ms
     const dotsInterval = setInterval(() => {
@@ -49,17 +96,22 @@ export function GenerationProgress({
       });
     }, 500);
 
+    // Change message every 3 seconds for variety
+    const messageInterval = setInterval(() => {
+      setCurrentMessage(getGenerationMessage(generatingFiles));
+    }, 3000);
+
     return () => {
       clearInterval(dotsInterval);
+      clearInterval(messageInterval);
     };
-  }, [isGenerating]);
+  }, [isGenerating, generatingFiles]);
 
   if (!isGenerating) {
     return null;
   }
 
   const fileCount = generatingFiles.size;
-  const currentMessage = getGenerationMessage(generatingFiles);
 
   return (
     <div className="inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20 px-4 py-3 backdrop-blur-sm">

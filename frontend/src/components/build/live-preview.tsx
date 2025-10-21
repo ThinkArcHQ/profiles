@@ -5,6 +5,7 @@ import type { GeneratedFile } from './preview-panel';
 
 interface LivePreviewProps {
   files: GeneratedFile[];
+  refreshKey?: number;
 }
 
 /**
@@ -127,10 +128,12 @@ function buildPreviewHTML(files: GeneratedFile[]): string {
 </html>`.trim();
 }
 
-export function LivePreview({ files }: LivePreviewProps) {
+export function LivePreview({ files, refreshKey = 0 }: LivePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [error, setError] = useState<string | null>(null);
-  const [previewKey, setPreviewKey] = useState(0);
+  
+  // Create a stable hash of file contents to detect changes
+  const filesHash = files.map(f => `${f.path}:${f.content.substring(0, 50)}`).join('|');
 
   useEffect(() => {
     // Listen for errors from iframe
@@ -144,27 +147,37 @@ export function LivePreview({ files }: LivePreviewProps) {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  useEffect(() => {
-    // Clear error when files change
-    setError(null);
-
-    // Update iframe content
-    if (iframeRef.current) {
+  // Function to update iframe content
+  const updatePreview = () => {
+    if (iframeRef.current && files.length > 0) {
       try {
         const previewHTML = buildPreviewHTML(files);
         const iframe = iframeRef.current;
         const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
 
         if (iframeDoc) {
+          console.log('Updating preview with', files.length, 'files');
           iframeDoc.open();
           iframeDoc.write(previewHTML);
           iframeDoc.close();
         }
       } catch (err) {
+        console.error('Preview update error:', err);
         setError(err instanceof Error ? err.message : 'Failed to render preview');
       }
     }
-  }, [files, previewKey]);
+  };
+
+  useEffect(() => {
+    // Clear error when files change
+    setError(null);
+    
+    // Update preview whenever files change or refresh is triggered
+    console.log('Files changed, updating preview. Hash:', filesHash.substring(0, 100));
+    updatePreview();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filesHash, refreshKey]);
 
   return (
     <div className="flex h-full flex-col bg-white">
@@ -218,7 +231,7 @@ export function LivePreview({ files }: LivePreviewProps) {
       <div className="flex-1 overflow-hidden bg-white">
         <iframe
           ref={iframeRef}
-          key={previewKey}
+          key={refreshKey}
           title="Live Preview"
           sandbox="allow-scripts allow-same-origin"
           className="h-full w-full border-0"
